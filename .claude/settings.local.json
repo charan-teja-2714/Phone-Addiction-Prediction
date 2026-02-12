@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c:*)",
+      "Bash(\"i:/Final Year Projects/PhoneAddictionApp/ml/venv/Scripts/python\" compute_defaults.py)",
+      "Bash(del:*)",
+      "Bash(del srcstoreuseAppStore.ts)",
+      "Bash(del srchooksuseAppLifecycle.ts)",
+      "Bash(del srcnavigationAppNavigator.tsx)",
+      "Bash(del srccomponentsRiskCard.tsx)",
+      "Bash(del srccomponentsCompletenessCard.tsx)",
+      "Bash(del srccomponentsStatCard.tsx)",
+      "Bash(del srccomponentsInsightCard.tsx)",
+      "Bash(del srccomponentsSectionHeader.tsx)",
+      "Bash(del srccomponentsCustomSlider.tsx)",
+      "Bash(del srcscreensHomeScreen.tsx)",
+      "Bash(del srcscreensQuestionnaireScreen.tsx)",
+      "Bash(del srcscreensProfileScreen.tsx)",
+      "Bash(netsh advfirewall firewall show rule:*)",
+      "Bash(adb reverse:*)",
+      "Bash(./gradlew assembleDebug:*)",
+      "Bash(npx react-native bundle:*)",
+      "Bash(curl:*)",
+      "Bash(.gradlew assembleDebug:*)",
+      "Bash(gradlew.bat assembleDebug:*)",
+      "Bash(powershell -Command:*)"
+    ]
+  }
+}

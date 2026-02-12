@@ -1,0 +1,22 @@
+{
+  "Age": 13,
+  "Gender": 0,
+  "Daily_Usage_Hours": 4.0,
+  "Sleep_Hours": 6.1,
+  "Academic_Performance": 78,
+  "Social_Interactions": 5,
+  "Exercise_Hours": 0.1,
+  "Anxiety_Level": 10,
+  "Depression_Level": 3,
+  "Self_Esteem": 8,
+  "Parental_Control": 0,
+  "Screen_Time_Before_Bed": 1.4,
+  "Phone_Checks_Per_Day": 86,
+  "Apps_Used_Daily": 19,
+  "Time_on_Social_Media": 3.6,
+  "Time_on_Gaming": 1.7,
+  "Time_on_Education": 1.2,
+  "Phone_Usage_Purpose": 0,
+  "Family_Communication": 4,
+  "Weekend_Usage_Hours": 8.7
+}
