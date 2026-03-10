@@ -1,0 +1,50 @@
+{
+  "model": "XGBoost",
+  "accuracy": 0.895,
+  "precision_macro": 0.8586,
+  "recall_macro": 0.8558,
+  "f1_macro": 0.8554,
+  "classification_report": {
+    "Low Addiction": {
+      "precision": 0.881578947368421,
+      "recall": 0.7976190476190477,
+      "f1-score": 0.8375,
+      "support": 84.0
+    },
+    "Moderate Addiction": {
+      "precision": 0.7315436241610739,
+      "recall": 0.8320610687022901,
+      "f1-score": 0.7785714285714286,
+      "support": 131.0
+    },
+    "High Addiction": {
+      "precision": 0.9626666666666667,
+      "recall": 0.9376623376623376,
+      "f1-score": 0.95,
+      "support": 385.0
+    },
+    "accuracy": 0.895,
+    "macro avg": {
+      "precision": 0.8585964127320539,
+      "recall": 0.8557808179945585,
+      "f1-score": 0.8553571428571428,
+      "support": 600.0
+    },
+    "weighted avg": {
+      "precision": 0.9008525216845245,
+      "recall": 0.895,
+      "f1-score": 0.8968214285714285,
+      "support": 600.0
+    }
+  },
+  "cv_folds": 5,
+  "cv_f1_scores": [
+    0.9611,
+    0.9752,
+    0.9676,
+    0.9783,
+    0.9665
+  ],
+  "cv_f1_mean": 0.9698,
+  "cv_f1_std": 0.0062
+}

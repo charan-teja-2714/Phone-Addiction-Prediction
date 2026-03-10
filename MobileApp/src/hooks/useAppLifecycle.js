@@ -2,6 +2,12 @@ import { useEffect, useRef, useCallback } from 'react';
 import { AppState } from 'react-native';
 import { collectPerAppUsage, collectUsageStats } from '../services/usageCollector';
 import { runPrediction } from '../services/predictionService';
+import {
+  notifyPredictionResult,
+  notifyScreenTimeMilestone,
+  requestNotificationPermission,
+  scheduleDailySummary,
+} from '../services/notificationService';
 import { useAppStore } from '../store/useAppStore';
 
 /**
@@ -53,12 +59,37 @@ export const useAppLifecycle = () => {
     }).then((result) => {
       if (result) {
         useAppStore.getState().setPrediction(result);
+        // Send push notification with the prediction result
+        notifyPredictionResult(
+          result.label,
+          result.confidence,
+          useAppStore.getState().usageStats,
+        );
       }
     });
+
+    // Screen time milestone alerts (3h, 5h, 7h)
+    const currentStats = useAppStore.getState().usageStats;
+    const hours = currentStats.dailyUsageHours;
+    const milestonesHit = useAppStore.getState().milestonesHit || {};
+    for (const threshold of [3, 5, 7]) {
+      if (hours >= threshold && !milestonesHit[threshold]) {
+        notifyScreenTimeMilestone(threshold);
+        useAppStore.setState({
+          milestonesHit: { ...milestonesHit, [threshold]: true },
+        });
+        break; // only fire one at a time
+      }
+    }
   }, [setUsageStats]);
 
-  // Fetch usage data on mount (first app open)
+  // On first mount: request notification permission + schedule daily summary
   useEffect(() => {
+    requestNotificationPermission().then((granted) => {
+      if (granted) scheduleDailySummary(21); // 9 PM daily summary
+    });
+    // Reset daily milestones at midnight
+    useAppStore.setState({ milestonesHit: {} });
     fetchAndUpdateUsage();
   }, [fetchAndUpdateUsage]);
 

@@ -24,15 +24,16 @@ wheels/
 *.egg
 
 # ML Models & Data
-ml/models/**/*.pkl
-ml/models/**/*.cbm
-ml/models/**/*.json
+# Model artifacts: only CatBoost is committed (used by the API).
+# Other trained models are excluded to keep the repo small.
+ml/models/lightgbm/
+ml/models/random_forest/
+ml/models/xgboost/
 ml/data/raw/*.csv
 ml/data/processed/*.csv
 ml/catboost_info/
 ml/logs/*.log
 ml/plots/*.png
-ml/metrics/*.json
 
 # React Native
 MobileApp/node_modules/

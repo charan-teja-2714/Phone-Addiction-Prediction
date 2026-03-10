@@ -3,6 +3,11 @@ import { Alert, ScrollView, Share, StyleSheet, Switch, TouchableOpacity, View } 
 import { Button, Card, Divider, Text, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { hasUsagePermission, openUsageAccessSettings } from '../services/usageCollector';
+import {
+  cancelAllNotifications,
+  requestNotificationPermission,
+  scheduleDailySummary,
+} from '../services/notificationService';
 import { useAppStore } from '../store/useAppStore';
 import { formatHours } from '../utils/formatTime';
 import { Colors, Radius, Spacing } from '../theme';
@@ -105,9 +110,21 @@ export const ProfileScreen = () => {
     }
   }, [permissionGranted]);
 
-  const handleNotificationToggle = useCallback(() => {
-    setNotificationsOn((prev) => !prev);
-  }, []);
+  const handleNotificationToggle = useCallback(async () => {
+    const next = !notificationsOn;
+    setNotificationsOn(next);
+    if (next) {
+      const granted = await requestNotificationPermission();
+      if (granted) {
+        scheduleDailySummary(21); // 9 PM daily summary
+      } else {
+        setNotificationsOn(false);
+        Alert.alert('Permission Required', 'Please allow notifications for this app in Settings.');
+      }
+    } else {
+      cancelAllNotifications();
+    }
+  }, [notificationsOn]);
 
   const handleSetGoal = useCallback(() => {
     setShowGoalEditor(true);

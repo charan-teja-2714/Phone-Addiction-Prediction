@@ -23,7 +23,10 @@
       "Bash(curl:*)",
       "Bash(.gradlew assembleDebug:*)",
       "Bash(gradlew.bat assembleDebug:*)",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(npm install @notifee/react-native)",
+      "Bash(find 'i:/Final Year Projects/PhoneAddictionApp' -maxdepth 3 -name *.py)",
+      "Bash(find 'i:/Final Year Projects/PhoneAddictionApp/ml' -name *.pkl -o -name *.joblib -o -name *.cbm -o -name *.json)"
     ]
   }
 }

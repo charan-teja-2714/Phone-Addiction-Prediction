@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import { CompletenessCard } from '../components/CompletenessCard';
 import { InsightCard } from '../components/InsightCard';
+import { RiskAlertCard } from '../components/RiskAlertCard';
 import { RiskCard } from '../components/RiskCard';
 import { SectionHeader } from '../components/SectionHeader';
 import { StatCard } from '../components/StatCard';
@@ -23,16 +23,16 @@ import { Colors, Radius, Spacing } from '../theme';
 
 // Category metadata for the screen-time modal
 const CATEGORY_META = {
-  'Social Media':   { icon: 'forum-outline',                 color: Colors.categorySocial },
-  'Gaming':         { icon: 'gamepad-variant-outline',        color: Colors.categoryGaming },
-  'Education':      { icon: 'school-outline',                 color: Colors.categoryEducation },
-  'Entertainment':  { icon: 'play-circle-outline',            color: '#E91E63' },
-  'Communication':  { icon: 'message-text-outline',           color: '#2196F3' },
-  'Browser':        { icon: 'web',                            color: '#FF9800' },
-  'Shopping':       { icon: 'cart-outline',                   color: '#9C27B0' },
-  'Finance':        { icon: 'bank-outline',                   color: '#00897B' },
-  'Productivity':   { icon: 'briefcase-check-outline',        color: '#43A047' },
-  'Other':          { icon: 'dots-horizontal-circle-outline', color: Colors.categoryOther },
+  'Social Media': { icon: 'forum-outline', color: Colors.categorySocial },
+  'Gaming': { icon: 'gamepad-variant-outline', color: Colors.categoryGaming },
+  'Education': { icon: 'school-outline', color: Colors.categoryEducation },
+  'Entertainment': { icon: 'play-circle-outline', color: '#E91E63' },
+  'Communication': { icon: 'message-text-outline', color: '#2196F3' },
+  'Browser': { icon: 'web', color: '#FF9800' },
+  'Shopping': { icon: 'cart-outline', color: '#9C27B0' },
+  'Finance': { icon: 'bank-outline', color: '#00897B' },
+  'Productivity': { icon: 'briefcase-check-outline', color: '#43A047' },
+  'Other': { icon: 'dots-horizontal-circle-outline', color: Colors.categoryOther },
 };
 
 export const HomeScreen = () => {
@@ -105,12 +105,15 @@ export const HomeScreen = () => {
           </Text>
         </View>
         <View style={styles.headerIcon}>
-          <Icon name="heart" size={28} color={Colors.primary} />
+          <Icon name="shield-heart-outline" size={28} color={Colors.primary} />
         </View>
       </View>
 
       {/* Hero Donut Card */}
       <RiskCard prediction={prediction} usage={usage} perAppUsage={perAppUsage} />
+
+      {/* Risk Alert + Suggestions */}
+      <RiskAlertCard prediction={prediction} usage={usage} />
 
       {/* Predict Button */}
       {!prediction && (
@@ -172,17 +175,19 @@ export const HomeScreen = () => {
       {/* Daily Insights */}
       <SectionHeader icon="lightbulb-on-outline" title="Today's Insights" />
       <InsightCard
-        icon="Home"
-        text="Getting enough sleep helps regulate screen time. Aim for 7-8 hours nightly."
+        icon="sleep"
+        text="Getting enough sleep helps regulate screen time. Aim for 7–8 hours nightly."
         color={Colors.accent}
       />
+
       <InsightCard
-        icon="run"
+        icon="run-fast"
         text="Physical activity naturally reduces the urge to check your phone frequently."
         color={Colors.riskLow}
       />
+
       <InsightCard
-        icon="book-open-variant"
+        icon="school-outline"
         text="Spending time on educational content promotes healthier phone usage patterns."
         color={Colors.info}
       />

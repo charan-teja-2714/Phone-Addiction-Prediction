@@ -1,0 +1,44 @@
+{
+  "description": "Ordered input feature schema for Smartphone Addiction Prediction inference.",
+  "note": "All inference requests MUST provide features in this exact order.",
+  "features": [
+    "Age",
+    "Gender",
+    "Daily_Usage_Hours",
+    "Sleep_Hours",
+    "Academic_Performance",
+    "Social_Interactions",
+    "Exercise_Hours",
+    "Anxiety_Level",
+    "Depression_Level",
+    "Self_Esteem",
+    "Parental_Control",
+    "Screen_Time_Before_Bed",
+    "Phone_Checks_Per_Day",
+    "Apps_Used_Daily",
+    "Time_on_Social_Media",
+    "Time_on_Gaming",
+    "Time_on_Education",
+    "Phone_Usage_Purpose",
+    "Family_Communication",
+    "Weekend_Usage_Hours"
+  ],
+  "categorical_features": {
+    "Gender": {
+      "type": "label_encoded",
+      "mapping": {"Female": 0, "Male": 1, "Other": 2}
+    },
+    "Phone_Usage_Purpose": {
+      "type": "label_encoded",
+      "mapping": {"Browsing": 0, "Education": 1, "Gaming": 2, "Other": 3, "Social Media": 4}
+    }
+  },
+  "derived_features_added_at_inference": [
+    "Total_Content_Hours",
+    "Usage_Sleep_Ratio",
+    "Mental_Health_Score",
+    "Weekend_Weekday_Ratio"
+  ],
+  "total_raw_features": 20,
+  "total_model_features": 24
+}
