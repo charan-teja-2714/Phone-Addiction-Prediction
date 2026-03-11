@@ -105,7 +105,7 @@ export const HomeScreen = () => {
           </Text>
         </View>
         <View style={styles.headerIcon}>
-          <Icon name="shield-heart-outline" size={28} color={Colors.primary} />
+          <Icon name="cellphone-check" size={28} color={Colors.primary} />
         </View>
       </View>
 
@@ -144,14 +144,14 @@ export const HomeScreen = () => {
       </View>
       <View style={styles.grid}>
         <StatCard
-          icon="cellphone"
+          icon="clock-time-four-outline"
           label="Screen Time"
           value={formatHours(usage.dailyUsageHours)}
           iconColor={Colors.primary}
           onPress={() => setShowScreenTime(true)}
         />
         <StatCard
-          icon="gesture-tap"
+          icon="lock-open-outline"
           label="Phone Checks"
           value={`${usage.phoneChecks}`}
           iconColor={Colors.categorySocial}
@@ -159,13 +159,13 @@ export const HomeScreen = () => {
       </View>
       <View style={styles.grid}>
         <StatCard
-          icon="weather-night"
+          icon="moon-waning-crescent"
           label="Night Usage"
           value={formatHours(usage.screenTimeBeforeBed)}
           iconColor={Colors.riskModerate}
         />
         <StatCard
-          icon="apps"
+          icon="view-grid-outline"
           label="Apps Used"
           value={`${usage.appsUsed || perAppUsage.length}`}
           iconColor={Colors.categoryEducation}
@@ -175,13 +175,13 @@ export const HomeScreen = () => {
       {/* Daily Insights */}
       <SectionHeader icon="lightbulb-on-outline" title="Today's Insights" />
       <InsightCard
-        icon="sleep"
+        icon="bed-outline"
         text="Getting enough sleep helps regulate screen time. Aim for 7–8 hours nightly."
         color={Colors.accent}
       />
 
       <InsightCard
-        icon="run-fast"
+        icon="walk"
         text="Physical activity naturally reduces the urge to check your phone frequently."
         color={Colors.riskLow}
       />

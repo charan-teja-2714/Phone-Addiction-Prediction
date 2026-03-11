@@ -11,11 +11,11 @@
  *   export const API_BASE_URL = 'https://your-server.com';
  */
 
-// Development (USB via adb reverse)
-export const API_BASE_URL = 'http://localhost:8000';
+// Production — Render.com deployment
+export const API_BASE_URL = 'https://phone-addiction-prediction.onrender.com';
 
-// Production — uncomment and replace when deploying the APK:
-// export const API_BASE_URL = 'https://your-production-server.com';
+// Development (USB via adb reverse) — uncomment when testing locally:
+// export const API_BASE_URL = 'http://localhost:8000';
 
 /** Timeout for API requests in milliseconds. */
 export const API_TIMEOUT_MS = 15000;

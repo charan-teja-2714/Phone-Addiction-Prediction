@@ -235,46 +235,46 @@ export const InsightsScreen = () => {
   const insights = [];
   if (usage.screenTimeBeforeBed > 1) {
     insights.push({
-      icon: 'weather-night',
+      icon: 'moon-waning-crescent',
       text: `You used your phone for ${formatHours(usage.screenTimeBeforeBed)} between 10 PM and 6 AM. Late-night usage can affect sleep quality.`,
       color: Colors.riskModerate,
     });
   } else {
     insights.push({
-      icon: 'weather-night',
+      icon: 'moon-waning-crescent',
       text: 'Your late-night phone usage is low. Keep it up for better sleep quality!',
       color: Colors.riskLow,
     });
   }
   if (usage.phoneChecks > 50) {
     insights.push({
-      icon: 'cellphone',
+      icon: 'lock-open-outline',
       text: `You checked your phone ${usage.phoneChecks} times today. Try keeping it out of reach during focused activities.`,
       color: Colors.riskHigh,
     });
   } else if (usage.phoneChecks > 20) {
     insights.push({
-      icon: 'cellphone',
+      icon: 'lock-open-outline',
       text: `You checked your phone ${usage.phoneChecks} times today. That's moderate — setting specific check-in times can help.`,
       color: Colors.riskModerate,
     });
   } else {
     insights.push({
-      icon: 'cellphone',
+      icon: 'lock-open-outline',
       text: `Only ${usage.phoneChecks} phone checks today. Great self-control!`,
       color: Colors.riskLow,
     });
   }
   if (usage.socialMediaHours > usage.educationHours && usage.socialMediaHours > 0.5) {
     insights.push({
-      icon: 'swap-horizontal',
+      icon: 'swap-horizontal-bold',
       text: `Social media (${formatHours(usage.socialMediaHours)}) outweighs education (${formatHours(usage.educationHours)}). Try swapping 30 min of scrolling for learning.`,
       color: Colors.info,
     });
   }
   if (usage.educationHours > 0.5) {
     insights.push({
-      icon: 'school',
+      icon: 'school-outline',
       text: `You spent ${formatHours(usage.educationHours)} on educational apps. That's time well invested!`,
       color: Colors.riskLow,
     });
@@ -318,7 +318,7 @@ export const InsightsScreen = () => {
       </Card>
 
       {/* App Usage — Category Cards */}
-      <SectionHeader icon="folder-outline" title="Categories" />
+      <SectionHeader icon="shape-outline" title="Categories" />
       <View style={styles.sourceRow}>
         <Icon name="information-outline" size={14} color={Colors.textSecondary} />
         <Text variant="labelSmall" style={styles.sourceText}>
@@ -419,7 +419,7 @@ export const InsightsScreen = () => {
       </Card>
 
       {/* Pattern Insights */}
-      <SectionHeader icon="head-lightbulb-outline" title="Pattern Insights" />
+      <SectionHeader icon="brain" title="Pattern Insights" />
       {insights.map((insight, i) => (
         <InsightCard key={i} icon={insight.icon} text={insight.text} color={insight.color} />
       ))}

@@ -15,7 +15,7 @@ import { Colors, Radius, Spacing } from '../theme';
 // ── Tip library ──────────────────────────────────────────────────────────────
 const HIGH_TIPS = [
   {
-    icon: 'phone-off',
+    icon: 'cellphone-off',
     title: 'Phone-Free Hours',
     body: 'Set 2 phone-free hours today — meal times are a great start. Use Do Not Disturb.',
   },
@@ -25,7 +25,7 @@ const HIGH_TIPS = [
     body: 'Social media and shopping notifications drive impulsive phone checks. Silence them.',
   },
   {
-    icon: 'run-fast',
+    icon: 'run',
     title: 'Replace Scrolling with Movement',
     body: 'Every time you feel the urge to open social media, do 10 push-ups or a 5-min walk instead.',
   },
@@ -58,7 +58,7 @@ const MODERATE_TIPS = [
     body: 'Replace 30 min of social media with reading. Any book — fiction works just as well.',
   },
   {
-    icon: 'nature-people',
+    icon: 'tree-outline',
     title: 'Outdoor Break',
     body: 'Take a 15-min outdoor walk without your phone. Fresh air resets dopamine levels.',
   },
@@ -75,7 +75,7 @@ function getContextTips(usage, label) {
   // Add usage-specific tips
   if (usage?.screenTimeBeforeBed > 1) {
     tips.push({
-      icon: 'bed-clock',
+      icon: 'bed-outline',
       title: 'Late-Night Screen Time Detected',
       body: `You used your phone late at night. Blue light disrupts melatonin — try stopping by 10 PM.`,
     });
@@ -83,13 +83,13 @@ function getContextTips(usage, label) {
 
   if (usage?.phoneChecks > 50) {
     tips.push({
-      icon: 'gesture-tap-hold',
+      icon: 'cellphone-lock',
       title: 'Too Many Phone Checks',
       body: `${usage.phoneChecks} unlocks today. Try leaving your phone face-down and only checking on vibration.`,
     });
   } else if (usage?.phoneChecks > 30) {
     tips.push({
-      icon: 'gesture-tap-hold',
+      icon: 'cellphone-lock',
       title: 'Frequent Phone Checks',
       body: `${usage.phoneChecks} unlocks today. Group your tasks into batches to reduce constant switching.`,
     });
