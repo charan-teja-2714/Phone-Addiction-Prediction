@@ -4,6 +4,9 @@ Complete instructions to set up this project on a new system.
 
 ---
 
+adb install -r "I:/Final Year Projects/PhoneAddictionApp/MobileApp/android/app/build/outputs/apk/release/app-release.apk"
+
+
 ## Prerequisites
 
 ### Required Software

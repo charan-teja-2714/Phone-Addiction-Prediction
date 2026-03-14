@@ -90,6 +90,24 @@ export const useAppStore = create(
           customCategories: { ...state.customCategories, [packageName]: category },
         })),
 
+      // ── Apps excluded from prediction (user-selected) ──
+      // Array of package name strings
+      excludedPackages: [],
+      toggleExcludePackage: (packageName) =>
+        set((state) => {
+          const already = state.excludedPackages.includes(packageName);
+          return {
+            excludedPackages: already
+              ? state.excludedPackages.filter((p) => p !== packageName)
+              : [...state.excludedPackages, packageName],
+          };
+        }),
+
+      // ── Weekly backfill flag ──
+      // True once we've run the past-7-days backfill so we don't repeat it
+      weeklyBackfillDone: false,
+      setWeeklyBackfillDone: () => set({ weeklyBackfillDone: true }),
+
       // ── User profile (age, gender, lifestyle) ──
       userProfile: defaultUserProfile,
       setUserProfile: (fields) =>
@@ -157,7 +175,7 @@ export const useAppStore = create(
             if (entry.prediction.label.includes('High')) riskLevel = 2;
             else if (entry.prediction.label.includes('Moderate')) riskLevel = 1;
           }
-          weekly.push({ day: dayName, riskLevel });
+          weekly.push({ day: dayName, riskLevel, dateKey: key });
         }
         set({ weeklyHistory: weekly });
       },
@@ -183,6 +201,8 @@ export const useAppStore = create(
         usageStatsDate: state.usageStatsDate,
         userProfile: state.userProfile,
         customCategories: state.customCategories,
+        excludedPackages: state.excludedPackages,
+        weeklyBackfillDone: state.weeklyBackfillDone,
       }),
       // Reset today's usage stats when rehydrating stale data from a previous day
       onRehydrateStorage: () => (state) => {

@@ -35,6 +35,7 @@ export const usePrediction = () => {
 
       if (result) {
         useAppStore.getState().setPrediction(result);
+        useAppStore.getState().refreshWeeklyHistory?.();
       } else {
         setError('Could not reach the prediction server.');
       }

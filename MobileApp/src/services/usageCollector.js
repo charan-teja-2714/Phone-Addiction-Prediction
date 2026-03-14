@@ -160,6 +160,109 @@ export async function collectPerAppUsage() {
 }
 
 /**
+ * Collects per-day usage stats for the past 7 days from the native module.
+ *
+ * Returns an array of 7 objects (oldest → newest), each with the same
+ * numeric fields as collectUsageStats() plus a `dateKey` ("YYYY-MM-DD").
+ *
+ * Returns [] on iOS, missing permission, or error.
+ *
+ * @returns {Promise<Array<{ dateKey: string, dailyUsageHours: number, ... }>>}
+ */
+export async function collectWeeklyStats() {
+  if (Platform.OS !== 'android' || !UsageStatsModule) return [];
+
+  try {
+    const result = await UsageStatsModule.getWeeklyStats();
+
+    if (result && result.error === 'PERMISSION_DENIED') return [];
+    if (!Array.isArray(result)) return [];
+
+    return result.map((day) => ({
+      dateKey:             day.dateKey,
+      dailyUsageHours:     ensureNumber(day.dailyUsageHours),
+      phoneChecksPerDay:   ensureNumber(day.phoneChecksPerDay),
+      appsUsedDaily:       ensureNumber(day.appsUsedDaily),
+      timeOnSocialMedia:   ensureNumber(day.timeOnSocialMedia),
+      timeOnGaming:        ensureNumber(day.timeOnGaming),
+      timeOnEducation:     ensureNumber(day.timeOnEducation),
+      screenTimeBeforeBed: ensureNumber(day.screenTimeBeforeBed),
+      weekendUsageHours:   ensureNumber(day.weekendUsageHours),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Collects per-app usage for a specific past date (YYYY-MM-DD).
+ *
+ * Uses queryUsageStats(INTERVAL_DAILY) under the hood — accurate for past days,
+ * not affected by reboot inflation. Returns [] on error or missing permission.
+ *
+ * @param {string} dateKey — e.g. "2026-03-12"
+ * @returns {Promise<Array<{ packageName, appName, usageMs, category }>>}
+ */
+export async function collectPerAppUsageForDate(dateKey) {
+  if (Platform.OS !== 'android' || !UsageStatsModule) return [];
+
+  try {
+    const result = await UsageStatsModule.getPerAppUsageForDate(dateKey);
+
+    if (result && result.error === 'PERMISSION_DENIED') return [];
+    if (!Array.isArray(result)) return [];
+
+    return result
+      .filter((app) => app && app.usageMs > 0)
+      .sort((a, b) => b.usageMs - a.usageMs);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Recomputes prediction-relevant aggregate stats from per-app usage,
+ * excluding any apps the user has marked as "exclude from prediction".
+ *
+ * Only affects: dailyUsageHours, appsUsedDaily, timeOnSocialMedia,
+ * timeOnGaming, timeOnEducation. Other metrics (phoneChecks,
+ * screenTimeBeforeBed, weekendUsage) are taken from the raw stats as-is.
+ *
+ * @param {object} rawStats        — Full stats from collectUsageStats()
+ * @param {Array}  apps            — Per-app list from collectPerAppUsage()
+ * @param {Array}  excludedPkgs    — Package names to exclude (from store)
+ * @returns {object}               — Adjusted stats safe to send to prediction API
+ */
+export function computePredictionStats(rawStats, apps, excludedPkgs) {
+  if (!excludedPkgs || excludedPkgs.length === 0) return rawStats;
+
+  const excluded = new Set(excludedPkgs);
+  const filtered = apps.filter((a) => !excluded.has(a.packageName));
+
+  let totalMs = 0, socialMs = 0, gamingMs = 0, eduMs = 0;
+  const pkgs = new Set();
+
+  for (const app of filtered) {
+    totalMs  += app.usageMs;
+    pkgs.add(app.packageName);
+    if (app.category === 'Social Media') socialMs += app.usageMs;
+    else if (app.category === 'Gaming')  gamingMs += app.usageMs;
+    else if (app.category === 'Education') eduMs  += app.usageMs;
+  }
+
+  const msToH = (ms) => Math.round(ms / 360_000) / 10;
+
+  return {
+    ...rawStats,
+    dailyUsageHours:   msToH(totalMs),
+    appsUsedDaily:     pkgs.size,
+    timeOnSocialMedia: msToH(socialMs),
+    timeOnGaming:      msToH(gamingMs),
+    timeOnEducation:   msToH(eduMs),
+  };
+}
+
+/**
  * Ensures a value is a non-negative number.
  * Converts NaN, null, undefined, and negative values to 0.
  */

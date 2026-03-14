@@ -93,6 +93,22 @@ export const ProfileScreen = () => {
     hasUsagePermission().then(setPermissionGranted);
   }, []);
 
+  // Reset profile inputs to current stored values whenever the editor is opened
+  useEffect(() => {
+    if (showProfileEditor) {
+      setAgeInput(String(userProfile.age));
+      setSleepInput(String(userProfile.sleepHours));
+      setExerciseInput(String(userProfile.exerciseHours));
+    }
+  }, [showProfileEditor]);
+
+  // Reset goal input to current stored value whenever the editor is opened
+  useEffect(() => {
+    if (showGoalEditor) {
+      setDailyGoalHours(String(dailyGoalHoursNum));
+    }
+  }, [showGoalEditor]);
+
   // ── Handlers ──
 
   const handlePermissionToggle = useCallback(async () => {

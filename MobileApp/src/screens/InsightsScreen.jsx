@@ -1,17 +1,23 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
   Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Switch,
   TouchableOpacity,
   View,
 } from 'react-native';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 import { Card, Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { InsightCard } from '../components/InsightCard';
 import { SectionHeader } from '../components/SectionHeader';
-import { collectPerAppUsage, collectUsageStats } from '../services/usageCollector';
+import { collectPerAppUsage, collectPerAppUsageForDate, collectUsageStats } from '../services/usageCollector';
 import { runPrediction } from '../services/predictionService';
 import { useAppStore } from '../store/useAppStore';
 import { formatDuration, formatHours } from '../utils/formatTime';
@@ -42,42 +48,65 @@ const RISK_COLORS = [Colors.riskLow, Colors.riskModerate, Colors.riskHigh];
 const BAR_MAX_HEIGHT = 110;
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const WeeklyTrendChart = ({ weeklyHistory }) => {
+// data = [{ day, riskLevel, dateKey, hours }]
+const WeeklyTrendChart = ({ data, onDayPress }) => {
   const todayName = DAY_NAMES[new Date().getDay()];
+  const maxHours = Math.max(...data.map((d) => d.hours ?? 0), 0.5);
+  const topLabel = `${Math.ceil(maxHours)}h`;
+  const midLabel = `${Math.round(maxHours / 2)}h`;
+
   return (
     <View style={styles.chartWrapper}>
+      {/* Y-axis labels aligned to BAR_MAX_HEIGHT */}
       <View style={styles.yAxis}>
-        <Text variant="labelSmall" style={styles.yLabel}>High</Text>
-        <Text variant="labelSmall" style={styles.yLabel}>Med</Text>
-        <Text variant="labelSmall" style={styles.yLabel}>Low</Text>
+        <Text variant="labelSmall" style={styles.yLabel}>{topLabel}</Text>
+        <Text variant="labelSmall" style={styles.yLabel}>{midLabel}</Text>
+        <Text variant="labelSmall" style={styles.yLabel}>0h</Text>
       </View>
-      <View style={styles.barsContainer}>
-        <View style={[styles.gridLine, { bottom: '33%' }]} />
-        <View style={[styles.gridLine, { bottom: '66%' }]} />
+      <View style={styles.barsOuter}>
+        {/* Grid lines overlay only the bar area (not labels below) */}
+        <View style={styles.gridLayer} pointerEvents="none">
+          <View style={[styles.gridLine, { top: Math.round(BAR_MAX_HEIGHT / 2) }]} />
+        </View>
+        {/* Bars row — no fixed height so labels don't overflow */}
         <View style={styles.barsRow}>
-          {weeklyHistory.map((entry) => {
+          {data.map((entry) => {
             const level = Math.min(Math.max(entry.riskLevel, 0), 2);
             const color = RISK_COLORS[level];
-            const heightPct = ((level + 1) / 3) * 100;
+            const hours = entry.hours ?? 0;
+            const heightPct = hours > 0 ? Math.max((hours / maxHours) * 100, 6) : 0;
             const isToday = entry.day === todayName;
             return (
-              <View key={entry.day} style={styles.barColumn}>
+              <TouchableOpacity
+                key={entry.day}
+                style={styles.barColumn}
+                onPress={() => onDayPress?.(entry)}
+                activeOpacity={0.7}>
                 <View style={styles.barArea}>
-                  <View
-                    style={[
-                      styles.vertBar,
-                      { height: `${heightPct}%`, backgroundColor: color },
-                      isToday && styles.vertBarToday,
-                    ]}>
-                    <View style={[styles.barDot, { borderColor: color }]} />
-                  </View>
+                  {hours > 0 ? (
+                    <View
+                      style={[
+                        styles.vertBar,
+                        { height: `${heightPct}%`, backgroundColor: color },
+                        isToday && styles.vertBarToday,
+                      ]}>
+                      <View style={[styles.barDot, { borderColor: color }]} />
+                    </View>
+                  ) : (
+                    <View style={styles.vertBarEmpty} />
+                  )}
                 </View>
                 <Text
                   variant="labelSmall"
                   style={[styles.dayLabel, isToday && styles.dayLabelToday]}>
                   {entry.day}
                 </Text>
-              </View>
+                {hours > 0 && (
+                  <Text style={styles.barHourLabel}>
+                    {hours >= 1 ? `${Math.floor(hours)}h` : `${Math.round(hours * 60)}m`}
+                  </Text>
+                )}
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -128,7 +157,7 @@ const CategoryCard = ({ category, apps, totalMs, onAppPress }) => {
               <Text variant="bodySmall" style={styles.catAppName} numberOfLines={1}>
                 {app.appName}
               </Text>
-              <Icon name="folder-move-outline" size={14} color={Colors.textSecondary} />
+              <Icon name="swap-horizontal" size={14} color={Colors.textSecondary} />
               <Text variant="bodySmall" style={styles.catAppTime}>
                 {formatDuration(app.usageMs)}
               </Text>
@@ -144,14 +173,21 @@ const CategoryCard = ({ category, apps, totalMs, onAppPress }) => {
 export const InsightsScreen = () => {
   const usage = useAppStore((s) => s.usageStats);
   const weeklyHistory = useAppStore((s) => s.weeklyHistory);
+  const dailyHistory = useAppStore((s) => s.dailyHistory);
   const perAppUsage = useAppStore((s) => s.perAppUsage);
   const customCategories = useAppStore((s) => s.customCategories);
   const setAppCategory = useAppStore((s) => s.setAppCategory);
+  const excludedPackages = useAppStore((s) => s.excludedPackages);
+  const toggleExcludePackage = useAppStore((s) => s.toggleExcludePackage);
   const setUsageStats = useAppStore((s) => s.setUsageStats);
   const setPerAppUsage = useAppStore((s) => s.setPerAppUsage);
   const [refreshing, setRefreshing] = useState(false);
-  const [reassignApp, setReassignApp] = useState(null); // app to reassign
+  const [reassignApp, setReassignApp] = useState(null);
   const [showAllApps, setShowAllApps] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null); // { day, dateKey, riskLevel }
+  const [showDayApps, setShowDayApps] = useState(false);
+  const [dayApps, setDayApps] = useState([]); // per-app list for selected day
+  const [dayAppsLoading, setDayAppsLoading] = useState(false);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -179,7 +215,10 @@ export const InsightsScreen = () => {
       questionnaire: state.questionnaire,
       userProfile: state.userProfile,
     }).then((result) => {
-      if (result) useAppStore.getState().setPrediction(result);
+      if (result) {
+        useAppStore.getState().setPrediction(result);
+        useAppStore.getState().refreshWeeklyHistory?.();
+      }
     });
     setRefreshing(false);
   }, [setUsageStats, setPerAppUsage]);
@@ -213,6 +252,15 @@ export const InsightsScreen = () => {
     return [...appsWithOverrides].sort((a, b) => b.usageMs - a.usageMs);
   }, [appsWithOverrides]);
 
+  // Enrich weeklyHistory with actual hours from dailyHistory for the chart
+  const weeklyDisplayData = useMemo(() => {
+    return weeklyHistory.map((entry) => {
+      const hist = dailyHistory[entry.dateKey];
+      const hours = hist?.usage?.dailyUsageHours ?? 0;
+      return { ...entry, hours };
+    });
+  }, [weeklyHistory, dailyHistory]);
+
   const maxCategoryMs = grouped.length > 0 ? grouped[0].totalMs : 0;
   const totalApps = perAppUsage.length;
   const totalMs = grouped.reduce((sum, g) => sum + g.totalMs, 0);
@@ -229,6 +277,64 @@ export const InsightsScreen = () => {
 
   const handleAppLongPress = useCallback((app) => {
     setReassignApp(app);
+  }, []);
+
+  const handleExcludeToggle = useCallback((pkg, appName, isCurrentlyExcluded) => {
+    if (isCurrentlyExcluded) {
+      // Re-include without confirmation
+      toggleExcludePackage(pkg);
+    } else {
+      Alert.alert(
+        'Exclude from Prediction?',
+        `"${appName}" usage will no longer count toward your addiction risk score. Your screen time display is not affected.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Exclude', style: 'destructive', onPress: () => toggleExcludePackage(pkg) },
+        ],
+      );
+    }
+  }, [toggleExcludePackage]);
+
+  const handleDayPress = useCallback((entry) => {
+    setSelectedDay(entry);
+    setDayApps([]);
+    setDayAppsLoading(true);
+
+    const today = new Date().toISOString().split('T')[0];
+    const isToday = entry.dateKey === today;
+
+    const dedup = (apps) => {
+      const map = {};
+      for (const app of apps) {
+        if (map[app.packageName]) {
+          map[app.packageName].usageMs += app.usageMs;
+        } else {
+          map[app.packageName] = { ...app };
+        }
+      }
+      return Object.values(map).sort((a, b) => b.usageMs - a.usageMs);
+    };
+
+    if (isToday) {
+      // Today: use already-loaded perAppUsage from store
+      const apps = useAppStore.getState().perAppUsage;
+      setDayApps(dedup(apps));
+      setDayAppsLoading(false);
+    } else {
+      // Past day: fetch from native module (queryUsageStats — accurate)
+      collectPerAppUsageForDate(entry.dateKey).then((apps) => {
+        setDayApps(dedup(apps));
+        setDayAppsLoading(false);
+      });
+    }
+  }, []);
+
+  const showExcludeInfo = useCallback(() => {
+    Alert.alert(
+      'Exclude from Prediction',
+      'When an app is excluded, its usage time is removed from the data sent to the AI model. This lets you mark apps like work tools or fitness apps that should not influence your addiction risk score.\n\nYour screen time display is unaffected.',
+      [{ text: 'Got it' }],
+    );
   }, []);
 
   // Dynamic insights
@@ -267,7 +373,7 @@ export const InsightsScreen = () => {
   }
   if (usage.socialMediaHours > usage.educationHours && usage.socialMediaHours > 0.5) {
     insights.push({
-      icon: 'swap-horizontal-bold',
+      icon: 'scale-unbalanced',
       text: `Social media (${formatHours(usage.socialMediaHours)}) outweighs education (${formatHours(usage.educationHours)}). Try swapping 30 min of scrolling for learning.`,
       color: Colors.info,
     });
@@ -305,7 +411,7 @@ export const InsightsScreen = () => {
       <SectionHeader icon="chart-timeline-variant" title="Weekly Risk Trend" />
       <Card style={styles.card}>
         <Card.Content>
-          <WeeklyTrendChart weeklyHistory={weeklyHistory} />
+          <WeeklyTrendChart data={weeklyDisplayData} onDayPress={handleDayPress} />
           <View style={styles.legendRow}>
             <View style={[styles.legendDot, { backgroundColor: Colors.riskLow }]} />
             <Text variant="labelSmall" style={styles.legendText}>Low</Text>
@@ -351,7 +457,7 @@ export const InsightsScreen = () => {
 
       {grouped.length > 0 && (
         <View style={styles.totalRow}>
-          <Icon name="sigma" size={16} color={Colors.textPrimary} />
+          <Icon name="clock-time-four-outline" size={16} color={Colors.textPrimary} />
           <Text variant="bodyMedium" style={styles.totalLabel}>Total Screen Time</Text>
           <Text variant="titleMedium" style={styles.totalValue}>
             {formatDuration(totalMs) || formatHours(usage.dailyUsageHours)}
@@ -367,10 +473,11 @@ export const InsightsScreen = () => {
             <>
               {(showAllApps ? allAppsSorted : allAppsSorted.slice(0, 10)).map((app, i) => {
                 const meta = CATEGORY_META[app.category] || CATEGORY_META['Other'];
+                const isExcluded = excludedPackages.includes(app.packageName);
                 return (
                   <TouchableOpacity
                     key={app.packageName}
-                    style={styles.flatAppRow}
+                    style={[styles.flatAppRow, isExcluded && styles.flatAppRowExcluded]}
                     onPress={() => handleAppLongPress(app)}
                     activeOpacity={0.7}>
                     <Text variant="bodySmall" style={styles.flatRank}>{i + 1}</Text>
@@ -383,6 +490,12 @@ export const InsightsScreen = () => {
                         <Text variant="labelSmall" style={styles.flatCatText}>
                           {app.category}
                         </Text>
+                        {isExcluded && (
+                          <View style={styles.excludedBadge}>
+                            <Icon name="eye-off-outline" size={10} color={Colors.textSecondary} />
+                            <Text variant="labelSmall" style={styles.excludedBadgeText}>excluded</Text>
+                          </View>
+                        )}
                       </View>
                     </View>
                     <Text variant="bodyMedium" style={styles.flatAppTime}>
@@ -419,7 +532,7 @@ export const InsightsScreen = () => {
       </Card>
 
       {/* Pattern Insights */}
-      <SectionHeader icon="brain" title="Pattern Insights" />
+      <SectionHeader icon="lightbulb-on-outline" title="Pattern Insights" />
       {insights.map((insight, i) => (
         <InsightCard key={i} icon={insight.icon} text={insight.text} color={insight.color} />
       ))}
@@ -446,7 +559,7 @@ export const InsightsScreen = () => {
               <Text variant="titleMedium" style={styles.modalTitle}>
                 Move App to Category
               </Text>
-              <TouchableOpacity onPress={() => setReassignApp(null)}>
+              <TouchableOpacity onPress={() => setReassignApp(null)} hitSlop={12}>
                 <Icon name="close" size={24} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
@@ -457,30 +570,245 @@ export const InsightsScreen = () => {
               </Text>
             )}
 
+            {/* Exclude from prediction — native Switch */}
+            {reassignApp && (() => {
+              const isExcluded = excludedPackages.includes(reassignApp.packageName);
+              return (
+                <View style={[styles.excludeToggleRow, isExcluded && styles.excludeToggleRowActive]}>
+                  <View style={styles.excludeToggleInfo}>
+                    <Text variant="bodyMedium" style={[
+                      styles.excludeToggleLabel,
+                      isExcluded && { color: Colors.riskModerate },
+                    ]}>
+                      Exclude from prediction
+                    </Text>
+                    <Text variant="labelSmall" style={styles.excludeToggleHint}>
+                      {isExcluded ? "App is hidden from risk analysis" : "App usage counts toward risk score"}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={showExcludeInfo} hitSlop={12} style={{ marginRight: Spacing.sm }}>
+                    <Icon name="information-outline" size={20} color={Colors.textSecondary} />
+                  </TouchableOpacity>
+                  <Switch
+                    value={isExcluded}
+                    onValueChange={() => handleExcludeToggle(reassignApp.packageName, reassignApp.appName, isExcluded)}
+                    thumbColor={isExcluded ? Colors.riskModerate : Colors.surface}
+                    trackColor={{ false: Colors.divider, true: Colors.riskModerate + '60' }}
+                  />
+                </View>
+              );
+            })()}
+
             <Text variant="bodySmall" style={styles.modalHint}>
               Choose a category for this app:
             </Text>
 
-            {CATEGORY_LIST.map((cat) => {
-              const meta = CATEGORY_META[cat];
-              const isCurrentCat = reassignApp?.category === cat;
-              return (
-                <TouchableOpacity
-                  key={cat}
-                  style={[styles.modalCatRow, isCurrentCat && styles.modalCatRowActive]}
-                  onPress={() => handleReassign(cat)}>
-                  <View style={[styles.modalCatIcon, { backgroundColor: meta.color + '15' }]}>
-                    <Icon name={meta.icon} size={20} color={meta.color} />
-                  </View>
-                  <Text variant="bodyMedium" style={styles.modalCatLabel}>{cat}</Text>
-                  {isCurrentCat && (
-                    <Icon name="check" size={18} color={Colors.primary} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+            <ScrollView style={styles.modalCatList} showsVerticalScrollIndicator={false}>
+              {CATEGORY_LIST.map((cat) => {
+                const meta = CATEGORY_META[cat];
+                const isCurrentCat = reassignApp?.category === cat;
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[styles.modalCatRow, isCurrentCat && styles.modalCatRowActive]}
+                    onPress={() => handleReassign(cat)}>
+                    <View style={[styles.modalCatIcon, { backgroundColor: meta.color + '15' }]}>
+                      <Icon name={meta.icon} size={20} color={meta.color} />
+                    </View>
+                    <Text variant="bodyMedium" style={styles.modalCatLabel}>{cat}</Text>
+                    {isCurrentCat && (
+                      <Icon name="check" size={18} color={Colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         </View>
+      </Modal>
+      {/* ── Day Detail — Full Screen Modal ── */}
+      <Modal
+        visible={!!selectedDay}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => { setSelectedDay(null); setShowDayApps(false); setDayApps([]); }}>
+        {selectedDay && (() => {
+          const hist = dailyHistory[selectedDay.dateKey];
+          const u = hist?.usage;
+          const p = hist?.prediction;
+          const RISK_COLORS_MAP = [Colors.riskLow, Colors.riskModerate, Colors.riskHigh];
+          const RISK_LABELS_MAP = ['Low Risk', 'Moderate Risk', 'High Risk'];
+          const riskLevel = Math.min(Math.max(selectedDay.riskLevel, 0), 2);
+          const riskColor = RISK_COLORS_MAP[riskLevel];
+          const dayDate = new Date(selectedDay.dateKey + 'T12:00:00');
+          const dateStr = dayDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+
+          // Map stored usage keys (backfill stores raw Java keys, today uses store keys)
+          const screenTime   = u?.dailyUsageHours   ?? 0;
+          const socialMedia  = u?.socialMediaHours  ?? u?.timeOnSocialMedia  ?? 0;
+          const gaming       = u?.gamingHours        ?? u?.timeOnGaming       ?? 0;
+          const education    = u?.educationHours     ?? u?.timeOnEducation    ?? 0;
+          const nightUse     = u?.screenTimeBeforeBed ?? 0;
+          const phoneChecks  = u?.phoneChecks        ?? u?.phoneChecksPerDay  ?? null;
+          const appsUsed     = u?.appsUsed           ?? u?.appsUsedDaily      ?? null;
+
+          return (
+            <ScrollView style={styles.dayScreen} contentContainerStyle={styles.dayScreenContent}>
+              {/* Header */}
+              <View style={styles.dayScreenHeader}>
+                <TouchableOpacity onPress={() => { setSelectedDay(null); setShowDayApps(false); setDayApps([]); }} style={styles.dayBackBtn} hitSlop={12}>
+                  <Icon name="arrow-left" size={24} color={Colors.textPrimary} />
+                </TouchableOpacity>
+                <View style={styles.dayScreenTitles}>
+                  <Text variant="headlineSmall" style={styles.dayScreenTitle}>{selectedDay.day}</Text>
+                  <Text variant="bodySmall" style={styles.dayScreenDate}>{dateStr}</Text>
+                </View>
+                <TouchableOpacity onPress={() => { setSelectedDay(null); setShowDayApps(false); setDayApps([]); }} style={styles.dayCloseBtn} hitSlop={12}>
+                  <Icon name="close" size={22} color={Colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Risk prediction card */}
+              <Card style={[styles.dayRiskCard, { borderLeftColor: riskColor, borderLeftWidth: 4 }]}>
+                <Card.Content style={styles.dayRiskCardContent}>
+                  <View style={[styles.dayRiskIconWrap, { backgroundColor: riskColor + '18' }]}>
+                    <Icon name="shield-account-outline" size={28} color={riskColor} />
+                  </View>
+                  <View style={styles.dayRiskInfo}>
+                    <Text variant="labelMedium" style={{ color: Colors.textSecondary }}>Addiction Risk</Text>
+                    <Text variant="titleMedium" style={[styles.dayRiskTitle, { color: riskColor }]}>
+                      {p?.label ?? RISK_LABELS_MAP[riskLevel]}
+                    </Text>
+                    {p?.confidence != null && (
+                      <Text variant="labelSmall" style={{ color: Colors.textSecondary }}>
+                        {Math.round(p.confidence * 100)}% model confidence
+                      </Text>
+                    )}
+                  </View>
+                </Card.Content>
+              </Card>
+
+              {/* Stats grid — 2 columns like HomeScreen */}
+              <SectionHeader icon="chart-box-outline" title="Usage Summary" />
+
+              {u ? (
+                <>
+                  <View style={styles.dayStatsRow}>
+                    {[
+                      { icon: 'cellphone-clock', color: Colors.primary,         value: formatHours(screenTime), label: 'Screen Time', tappable: true },
+                      phoneChecks !== null && { icon: 'lock-open-outline', color: Colors.categorySocial,   value: phoneChecks,             label: 'Phone Checks', tappable: false },
+                      appsUsed    !== null && { icon: 'apps',              color: Colors.categoryEducation, value: appsUsed,                label: 'Apps Used',    tappable: true },
+                    ].filter(Boolean).map((item) => (
+                      <TouchableOpacity
+                        key={item.label}
+                        style={[styles.dayStatCard, item.tappable && styles.dayStatCardTappable]}
+                        onPress={item.tappable ? () => setShowDayApps(true) : undefined}
+                        activeOpacity={item.tappable ? 0.7 : 1}>
+                        <View style={styles.dayStatCardContent}>
+                          <Icon name={item.icon} size={20} color={item.color} />
+                          <Text style={styles.dayStatNum}>{item.value}</Text>
+                          <Text style={styles.dayStatCardLabel}>{item.label}</Text>
+                          {item.tappable && (
+                            <Icon name="chevron-right" size={12} color={Colors.textSecondary} />
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <SectionHeader icon="shape-outline" title="By Category" />
+                  <Card style={[styles.card, { marginBottom: Spacing.sm }]}>
+                    <Card.Content>
+                      {[
+                        { label: 'Social Media', value: socialMedia,  icon: 'account-group-outline',   color: Colors.categorySocial },
+                        { label: 'Gaming',        value: gaming,       icon: 'gamepad-variant-outline', color: Colors.categoryGaming },
+                        { label: 'Education',     value: education,    icon: 'school-outline',           color: Colors.categoryEducation },
+                        { label: 'Late Night Use',value: nightUse,     icon: 'moon-waning-crescent',    color: Colors.riskModerate },
+                      ].map((item) => (
+                        <View key={item.label} style={styles.dayCatRow}>
+                          <View style={[styles.dayCatIcon, { backgroundColor: item.color + '18' }]}>
+                            <Icon name={item.icon} size={16} color={item.color} />
+                          </View>
+                          <Text variant="bodyMedium" style={styles.dayCatLabel}>{item.label}</Text>
+                          <Text variant="bodyMedium" style={[styles.dayCatValue, { color: item.color }]}>
+                            {formatHours(item.value)}
+                          </Text>
+                        </View>
+                      ))}
+                    </Card.Content>
+                  </Card>
+                </>
+              ) : (
+                <Card style={[styles.card, { marginTop: Spacing.md }]}>
+                  <Card.Content style={styles.emptyState}>
+                    <Icon name="calendar-remove-outline" size={40} color={Colors.disabled} />
+                    <Text variant="bodyMedium" style={styles.emptyText}>
+                      No data available for this day.{'\n'}Open the app daily to build your history.
+                    </Text>
+                  </Card.Content>
+                </Card>
+              )}
+
+              <View style={styles.bottomSpacer} />
+
+              {/* ── Per-app breakdown modal (tap Screen Time or Apps Used) ── */}
+              <Modal
+                visible={showDayApps}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowDayApps(false)}>
+                <View style={styles.modalOverlay}>
+                  <View style={[styles.modalContent, { paddingBottom: Spacing.xxl }]}>
+                    <View style={styles.modalHeader}>
+                      <Text variant="titleMedium" style={styles.modalTitle}>
+                        Apps Used · {selectedDay?.day}
+                      </Text>
+                      <TouchableOpacity onPress={() => setShowDayApps(false)} hitSlop={12}>
+                        <Icon name="close" size={24} color={Colors.textSecondary} />
+                      </TouchableOpacity>
+                    </View>
+                    {dayAppsLoading ? (
+                      <View style={styles.emptyState}>
+                        <ActivityIndicator size="small" color={Colors.primary} />
+                        <Text variant="bodySmall" style={styles.emptyText}>Loading apps…</Text>
+                      </View>
+                    ) : dayApps.length === 0 ? (
+                      <View style={styles.emptyState}>
+                        <Icon name="apps" size={32} color={Colors.disabled} />
+                        <Text variant="bodySmall" style={styles.emptyText}>
+                          No app data available for this day.
+                        </Text>
+                      </View>
+                    ) : (
+                      <ScrollView style={styles.modalCatList} showsVerticalScrollIndicator={false}>
+                        {dayApps.map((app, i) => {
+                          const meta = CATEGORY_META[customCategories[app.packageName] || app.category] || CATEGORY_META['Other'];
+                          return (
+                            <View key={app.packageName} style={styles.dayAppRow}>
+                              <Text style={styles.flatRank}>{i + 1}</Text>
+                              <View style={[styles.dayAppIconWrap, { backgroundColor: meta.color + '18' }]}>
+                                <Icon name={meta.icon} size={16} color={meta.color} />
+                              </View>
+                              <View style={styles.flatAppInfo}>
+                                <Text variant="bodyMedium" style={styles.flatAppName} numberOfLines={1}>
+                                  {app.appName}
+                                </Text>
+                                <Text variant="labelSmall" style={styles.flatCatText}>{app.category}</Text>
+                              </View>
+                              <Text variant="bodyMedium" style={styles.flatAppTime}>
+                                {formatDuration(app.usageMs)}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </ScrollView>
+                    )}
+                  </View>
+                </View>
+              </Modal>
+            </ScrollView>
+          );
+        })()}
       </Modal>
     </ScrollView>
   );
@@ -498,19 +826,24 @@ const styles = StyleSheet.create({
   },
 
   // ── Weekly trend chart ──
-  chartWrapper: { flexDirection: 'row', paddingTop: Spacing.sm },
+  chartWrapper: { flexDirection: 'row', paddingTop: Spacing.sm, alignItems: 'flex-start' },
   yAxis: {
-    justifyContent: 'space-between', paddingBottom: 24,
+    height: BAR_MAX_HEIGHT, justifyContent: 'space-between',
     marginRight: Spacing.sm, alignItems: 'flex-end',
   },
   yLabel: { color: Colors.textSecondary, fontSize: 10 },
-  barsContainer: { flex: 1, position: 'relative' },
+  // Outer area — bar columns + grid lines overlay
+  barsOuter: { flex: 1, position: 'relative' },
+  // Grid lines only cover the bar area height, positioned absolutely
+  gridLayer: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: BAR_MAX_HEIGHT,
+  },
   gridLine: {
     position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: Colors.divider,
   },
+  // Rows grow naturally — no fixed height, so labels don't overflow
   barsRow: {
-    flexDirection: 'row', justifyContent: 'space-around',
-    alignItems: 'flex-end', height: BAR_MAX_HEIGHT,
+    flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-start',
   },
   barColumn: { alignItems: 'center', flex: 1 },
   barArea: {
@@ -580,9 +913,16 @@ const styles = StyleSheet.create({
   },
   flatAppInfo: { flex: 1 },
   flatAppName: { color: Colors.textPrimary, fontWeight: '500' },
+  flatAppRowExcluded: { opacity: 0.5 },
   flatCatBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   flatCatDot: { width: 6, height: 6, borderRadius: 3 },
   flatCatText: { color: Colors.textSecondary, fontSize: 10 },
+  excludedBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    backgroundColor: Colors.divider, borderRadius: 4,
+    paddingHorizontal: 4, paddingVertical: 1, marginLeft: 4,
+  },
+  excludedBadgeText: { color: Colors.textSecondary, fontSize: 9 },
   flatAppTime: { fontWeight: '700', color: Colors.textPrimary, fontSize: 13 },
   showMoreBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -608,7 +948,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderTopLeftRadius: Radius.xl, borderTopRightRadius: Radius.xl,
     paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: Spacing.xxl,
+    maxHeight: '85%',
   },
+  modalCatList: { maxHeight: 280 },
   modalHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
@@ -627,6 +969,75 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
   },
   modalCatLabel: { flex: 1, color: Colors.textPrimary, fontWeight: '500' },
+
+  // ── Exclude toggle ──
+  excludeToggleRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: Spacing.sm, paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.divider,
+    marginTop: Spacing.md, marginBottom: Spacing.xs,
+  },
+  excludeToggleRowActive: { borderColor: Colors.riskModerate, backgroundColor: Colors.riskModerate + '10' },
+  excludeToggleInfo: { flex: 1 },
+  excludeToggleLabel: { fontWeight: '600', color: Colors.textPrimary },
+  excludeToggleHint: { color: Colors.textSecondary, fontSize: 11, marginTop: 2 },
+
+  // ── Chart extras ──
+  vertBarEmpty: {
+    width: 28, height: 4, borderRadius: 2, backgroundColor: Colors.divider,
+  },
+  barHourLabel: {
+    fontSize: 9, color: Colors.textSecondary, textAlign: 'center', marginTop: 2,
+  },
+
+  // ── Day detail full-screen ──
+  dayScreen: { flex: 1, backgroundColor: Colors.background },
+  dayScreenContent: { paddingBottom: Spacing.xxl },
+  dayScreenHeader: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: Spacing.md, paddingTop: Spacing.lg, paddingBottom: Spacing.sm,
+    backgroundColor: Colors.background,
+  },
+  dayBackBtn: { padding: 4, marginRight: Spacing.sm },
+  dayCloseBtn: { padding: 4 },
+  dayScreenTitles: { flex: 1 },
+  dayScreenTitle: { fontWeight: '700', color: Colors.textPrimary },
+  dayScreenDate: { color: Colors.textSecondary, marginTop: 2 },
+  dayRiskCard: {
+    marginHorizontal: Spacing.md, marginBottom: Spacing.sm,
+    borderRadius: Radius.md, backgroundColor: Colors.surface, elevation: 2,
+  },
+  dayRiskCardContent: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  dayRiskIconWrap: {
+    width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
+  },
+  dayRiskInfo: { flex: 1 },
+  dayRiskTitle: { fontWeight: '700', fontSize: 18 },
+  // Responsive: cards fill width evenly, min width prevents overflow on narrow screens
+  dayStatsRow: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    paddingHorizontal: Spacing.md, gap: Spacing.sm, marginBottom: Spacing.sm,
+  },
+  dayStatCard: {
+    flex: 1, minWidth: (SCREEN_WIDTH - 56) / 3,
+    borderRadius: Radius.md, backgroundColor: Colors.surface, elevation: 1,
+  },
+  dayStatCardTappable: { borderWidth: 1, borderColor: Colors.primary + '40' },
+  dayStatCardContent: { alignItems: 'center', paddingVertical: Spacing.sm, paddingHorizontal: 4, gap: 4 },
+  dayStatNum: { fontWeight: '800', color: Colors.textPrimary, fontSize: 18 },
+  dayStatCardLabel: { color: Colors.textSecondary, textAlign: 'center', fontSize: 10 },
+  dayAppRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingVertical: Spacing.sm, borderBottomWidth: 1, borderBottomColor: Colors.divider,
+  },
+  dayAppIconWrap: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  dayCatRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingVertical: Spacing.sm, borderBottomWidth: 1, borderBottomColor: Colors.divider,
+  },
+  dayCatIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  dayCatLabel: { flex: 1, color: Colors.textPrimary },
+  dayCatValue: { fontWeight: '700' },
 
   bottomSpacer: { height: Spacing.lg },
 });

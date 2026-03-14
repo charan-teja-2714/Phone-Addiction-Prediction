@@ -28,7 +28,9 @@
       "Bash(find 'i:/Final Year Projects/PhoneAddictionApp' -maxdepth 3 -name *.py)",
       "Bash(find 'i:/Final Year Projects/PhoneAddictionApp/ml' -name *.pkl -o -name *.joblib -o -name *.cbm -o -name *.json)",
       "Bash(npm --version)",
-      "Bash(java -version)"
+      "Bash(java -version)",
+      "Bash(grep -r Icons*name= 'i:\\\\Final Year Projects\\\\PhoneAddictionApp\\\\MobileApp\\\\src' --include=*.jsx --include=*.js -B 2 -A 2)",
+      "Bash(grep -rh name=\"\"[^\"\"]*\"\" 'i:\\\\Final Year Projects\\\\PhoneAddictionApp\\\\MobileApp\\\\src' --include=*.jsx --include=*.js)"
     ]
   }
 }

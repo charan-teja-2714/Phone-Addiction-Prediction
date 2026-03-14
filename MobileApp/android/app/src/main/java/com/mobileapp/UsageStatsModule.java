@@ -2,6 +2,7 @@ package com.mobileapp;
 
 import android.app.AppOpsManager;
 import android.app.usage.UsageEvents;
+import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
@@ -423,6 +424,128 @@ public class UsageStatsModule extends ReactContextBaseJavaModule {
     }
 
     /**
+     * Returns per-day usage stats for the past 7 days (including today).
+     *
+     * Each entry in the returned array has the same fields as collectUsageStats()
+     * plus a "dateKey" string in YYYY-MM-DD format identifying the day.
+     *
+     * Used to backfill the weekly risk chart on first permission grant.
+     */
+    @ReactMethod
+    public void getWeeklyStats(Promise promise) {
+        try {
+            if (!checkUsagePermission()) {
+                WritableMap error = Arguments.createMap();
+                error.putString("error", "PERMISSION_DENIED");
+                promise.resolve(error);
+                return;
+            }
+
+            UsageStatsManager manager = (UsageStatsManager)
+                getReactApplicationContext().getSystemService(Context.USAGE_STATS_SERVICE);
+
+            if (manager == null) {
+                promise.reject("SERVICE_ERROR", "UsageStatsManager unavailable");
+                return;
+            }
+
+            PackageManager pm = getReactApplicationContext().getPackageManager();
+            WritableArray weekData = Arguments.createArray();
+            Calendar now = Calendar.getInstance();
+
+            for (int i = 6; i >= 0; i--) {
+                Calendar dayCal = (Calendar) now.clone();
+                dayCal.add(Calendar.DAY_OF_YEAR, -i);
+                dayCal.set(Calendar.HOUR_OF_DAY, 0);
+                dayCal.set(Calendar.MINUTE, 0);
+                dayCal.set(Calendar.SECOND, 0);
+                dayCal.set(Calendar.MILLISECOND, 0);
+                long dayStart = dayCal.getTimeInMillis();
+
+                Calendar dayEndCal = (Calendar) dayCal.clone();
+                dayEndCal.add(Calendar.DAY_OF_YEAR, 1);
+                long dayEnd = Math.min(dayEndCal.getTimeInMillis(), now.getTimeInMillis());
+
+                String dateKey = String.format("%04d-%02d-%02d",
+                    dayCal.get(Calendar.YEAR),
+                    dayCal.get(Calendar.MONTH) + 1,
+                    dayCal.get(Calendar.DAY_OF_MONTH));
+
+                WritableMap dayStats;
+                if (i == 0) {
+                    // Today: event-based for real-time accuracy (current open session)
+                    long[][] nightWindows = getNightWindows(dayStart, dayEnd);
+                    boolean[] weekendFlags = getWeekendDayFlags(dayStart, dayEnd);
+                    dayStats = processEvents(manager, dayStart, dayEnd, nightWindows, weekendFlags);
+                } else {
+                    // Past days: queryUsageStats gives reliable pre-aggregated daily totals.
+                    // Event-based processing breaks on past days because reboots and app
+                    // crashes leave orphaned ACTIVITY_RESUMED events with no matching PAUSED,
+                    // causing multi-hour inflation. queryUsageStats avoids this entirely.
+                    dayStats = computeDayStatsFromUsageStats(manager, pm, dayStart, dayEnd);
+                }
+
+                dayStats.putString("dateKey", dateKey);
+                weekData.pushMap(dayStats);
+            }
+
+            promise.resolve(weekData);
+
+        } catch (Exception e) {
+            promise.reject("COLLECTION_ERROR", "Failed to get weekly stats: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Builds a day-stats map using queryUsageStats(INTERVAL_DAILY).
+     *
+     * This is more reliable than event-based processing for past days because
+     * the pre-aggregated daily bucket totals are not affected by missing PAUSED
+     * events from reboots or crashes.
+     *
+     * Trade-off: phoneChecksPerDay and screenTimeBeforeBed cannot be computed
+     * without event timestamps, so they default to 0 for past days.
+     */
+    private WritableMap computeDayStatsFromUsageStats(
+        UsageStatsManager manager, PackageManager pm,
+        long dayStart, long dayEnd
+    ) {
+        List<UsageStats> statsList = manager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY, dayStart, dayEnd);
+
+        long totalMs = 0, socialMs = 0, gamingMs = 0, eduMs = 0;
+        int appsUsed = 0;
+
+        if (statsList != null) {
+            for (UsageStats stats : statsList) {
+                String pkg = stats.getPackageName();
+                long ms = stats.getTotalTimeInForeground();
+
+                if (ms < 1000) continue;
+                if (isSystemUi(pkg)) continue;
+                if (!isUserApp(pm, pkg)) continue;
+
+                appsUsed++;
+                totalMs += ms;
+                if (isSocialMedia(pkg))  socialMs += ms;
+                else if (isGaming(pkg))  gamingMs += ms;
+                else if (isEducation(pkg)) eduMs   += ms;
+            }
+        }
+
+        WritableMap result = Arguments.createMap();
+        result.putDouble("dailyUsageHours",     msToHours(totalMs));
+        result.putInt("phoneChecksPerDay",       0); // not available from queryUsageStats
+        result.putInt("appsUsedDaily",           appsUsed);
+        result.putDouble("timeOnSocialMedia",    msToHours(socialMs));
+        result.putDouble("timeOnGaming",         msToHours(gamingMs));
+        result.putDouble("timeOnEducation",      msToHours(eduMs));
+        result.putDouble("screenTimeBeforeBed",  0); // not available from queryUsageStats
+        result.putDouble("weekendUsageHours",    0);
+        return result;
+    }
+
+    /**
      * Returns per-app usage data for today (since midnight).
      *
      * Each entry contains:
@@ -508,9 +631,10 @@ public class UsageStatsModule extends ReactContextBaseJavaModule {
                 // Skip system UI components
                 if (isSystemUi(pkg)) continue;
 
-                // Skip uninstalled / ghost apps (getAppLabel returns null)
+                // Skip ghost apps and non-launchable system services
+                if (!isUserApp(pm, pkg)) continue;
+
                 String appName = getAppLabel(pm, pkg);
-                if (appName == null) continue;
 
                 String category = getCategory(pkg);
 
@@ -529,9 +653,98 @@ public class UsageStatsModule extends ReactContextBaseJavaModule {
         }
     }
 
+    /**
+     * Returns per-app usage for a specific date (YYYY-MM-DD format).
+     * Uses queryUsageStats(INTERVAL_DAILY) — same reliable source as computeDayStatsFromUsageStats —
+     * so past-day data is accurate and not affected by reboot inflation.
+     */
+    @ReactMethod
+    public void getPerAppUsageForDate(String dateKey, Promise promise) {
+        try {
+            if (!checkUsagePermission()) {
+                WritableMap error = Arguments.createMap();
+                error.putString("error", "PERMISSION_DENIED");
+                promise.resolve(error);
+                return;
+            }
+
+            UsageStatsManager manager = (UsageStatsManager)
+                getReactApplicationContext().getSystemService(Context.USAGE_STATS_SERVICE);
+
+            if (manager == null) {
+                promise.reject("SERVICE_ERROR", "UsageStatsManager unavailable");
+                return;
+            }
+
+            // Parse YYYY-MM-DD into day start/end timestamps
+            String[] parts = dateKey.split("-");
+            int year  = Integer.parseInt(parts[0]);
+            int month = Integer.parseInt(parts[1]) - 1; // Calendar months are 0-indexed
+            int day   = Integer.parseInt(parts[2]);
+
+            Calendar dayCal = Calendar.getInstance();
+            dayCal.set(year, month, day, 0, 0, 0);
+            dayCal.set(Calendar.MILLISECOND, 0);
+            long dayStart = dayCal.getTimeInMillis();
+
+            Calendar dayEndCal = (Calendar) dayCal.clone();
+            dayEndCal.add(Calendar.DAY_OF_YEAR, 1);
+            long dayEnd = dayEndCal.getTimeInMillis();
+
+            PackageManager pm = getReactApplicationContext().getPackageManager();
+            List<UsageStats> statsList = manager.queryUsageStats(
+                UsageStatsManager.INTERVAL_DAILY, dayStart, dayEnd);
+
+            WritableArray apps = Arguments.createArray();
+
+            if (statsList != null) {
+                for (UsageStats stats : statsList) {
+                    String pkg = stats.getPackageName();
+                    long ms = stats.getTotalTimeInForeground();
+
+                    if (ms < 1000) continue;
+                    if (isSystemUi(pkg)) continue;
+                    if (!isUserApp(pm, pkg)) continue;
+
+                    String appName = getAppLabel(pm, pkg);
+                    String category = getCategory(pkg);
+
+                    WritableMap appMap = Arguments.createMap();
+                    appMap.putString("packageName", pkg);
+                    appMap.putString("appName", appName);
+                    appMap.putDouble("usageMs", ms);
+                    appMap.putString("category", category);
+                    apps.pushMap(appMap);
+                }
+            }
+
+            promise.resolve(apps);
+
+        } catch (Exception e) {
+            promise.reject("COLLECTION_ERROR",
+                "Failed to get per-app usage for date: " + e.getMessage(), e);
+        }
+    }
+
     // ───────────────────────────────────────────────────────────
     // APP LABEL & CATEGORY
     // ───────────────────────────────────────────────────────────
+
+    /**
+     * Returns true only for apps that are installed AND have a launcher activity
+     * (i.e., appear in the app drawer). This matches Digital Wellbeing's behaviour:
+     * background services, content providers, ghost apps, and non-launchable system
+     * components are all excluded from screen-time totals.
+     */
+    private boolean isUserApp(PackageManager pm, String packageName) {
+        try {
+            pm.getApplicationInfo(packageName, 0); // throws if not installed
+            Intent launchIntent = pm.getLaunchIntentForPackage(packageName);
+            return launchIntent != null;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false; // ghost app — not installed
+        }
+    }
 
     /**
      * Gets the user-visible app name from the package name.
@@ -619,9 +832,6 @@ public class UsageStatsModule extends ReactContextBaseJavaModule {
         // Currently-in-foreground package → timestamp when ACTIVITY_RESUMED fired
         Map<String, Long> foregroundStart = new HashMap<>();
 
-        // All packages that appeared in foreground (for appsUsedDaily)
-        Set<String> activePackages = new HashSet<>();
-
         // Session (phone check) tracking
         long lastPausedTime = 0;
         int phoneChecks = 0;
@@ -646,7 +856,6 @@ public class UsageStatsModule extends ReactContextBaseJavaModule {
             // ACTIVITY_RESUMED (API 29+, value 1) — app moved to foreground
             if (eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
                 foregroundStart.put(packageName, timestamp);
-                activePackages.add(packageName);
 
                 // Count phone checks: a new session starts when there's been
                 // an idle gap longer than PHONE_CHECK_GAP_MS since the last pause
@@ -710,14 +919,22 @@ public class UsageStatsModule extends ReactContextBaseJavaModule {
         long socialMediaMs = 0;
         long gamingMs = 0;
         long educationMs = 0;
+        int realAppsUsed = 0;
+
+        PackageManager pm = getReactApplicationContext().getPackageManager();
 
         for (Map.Entry<String, Long> entry : foregroundTime.entrySet()) {
             String pkg = entry.getKey();
             long ms = entry.getValue();
 
-            // Skip system apps to match Digital Wellbeing's totals
+            // Skip system UI components
             if (isSystemUi(pkg)) continue;
 
+            // Skip ghost apps (uninstalled) and non-launchable system services.
+            // This matches Digital Wellbeing: only count apps the user can actually open.
+            if (!isUserApp(pm, pkg)) continue;
+
+            realAppsUsed++;
             totalUsageMs += ms;
 
             if (isSocialMedia(pkg)) {
@@ -733,7 +950,7 @@ public class UsageStatsModule extends ReactContextBaseJavaModule {
         WritableMap result = Arguments.createMap();
         result.putDouble("dailyUsageHours",     msToHours(totalUsageMs));
         result.putInt("phoneChecksPerDay",       phoneChecks);
-        result.putInt("appsUsedDaily",           activePackages.size());
+        result.putInt("appsUsedDaily",           realAppsUsed);
         result.putDouble("timeOnSocialMedia",    msToHours(socialMediaMs));
         result.putDouble("timeOnGaming",         msToHours(gamingMs));
         result.putDouble("timeOnEducation",      msToHours(educationMs));

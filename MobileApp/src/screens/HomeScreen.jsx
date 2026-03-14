@@ -244,7 +244,7 @@ export const HomeScreen = () => {
               )}
 
               <View style={styles.modalTotal}>
-                <Icon name="sigma" size={18} color={Colors.textPrimary} />
+                <Icon name="clock-time-four-outline" size={18} color={Colors.textPrimary} />
                 <Text variant="bodyMedium" style={styles.modalTotalLabel}>Total</Text>
                 <Text variant="titleMedium" style={styles.modalTotalValue}>
                   {formatHours(usage.dailyUsageHours)}
