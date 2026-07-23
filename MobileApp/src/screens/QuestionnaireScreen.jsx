@@ -2,14 +2,14 @@ import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Card, ProgressBar, Text } from 'react-native-paper';
 import { CustomSlider } from '../components/CustomSlider';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useAppStore } from '../store/useAppStore';
 import { Colors, Radius, Spacing } from '../theme';
 
 const QUESTIONS = [
   {
     key: 'anxietyLevel',
-    icon: 'head-snowflake-outline',
+    icon: 'sad-outline',
     emoji: '😰',
     label: 'Anxiety Level',
     description: 'How anxious do you generally feel?',
@@ -22,7 +22,7 @@ const QUESTIONS = [
   },
   {
     key: 'depressionLevel',
-    icon: 'emoticon-sad-outline',
+    icon: 'sad-outline',
     emoji: '😔',
     label: 'Mood Rating',
     description: 'How would you rate your mood overall?',
@@ -61,7 +61,7 @@ const QUESTIONS = [
   },
   {
     key: 'familyCommunication',
-    icon: 'account-heart-outline',
+    icon: 'people-outline',
     emoji: '👨‍👩‍👧',
     label: 'Family Communication',
     description: 'How often do you talk to your family?',
@@ -74,7 +74,7 @@ const QUESTIONS = [
   },
   {
     key: 'socialInteractions',
-    icon: 'account-group-outline',
+    icon: 'people-circle-outline',
     emoji: '🤝',
     label: 'Social Interactions',
     description: 'How many meaningful social interactions do you have daily?',
@@ -87,7 +87,7 @@ const QUESTIONS = [
   },
   {
     key: 'parentalControl',
-    icon: 'shield-account-outline',
+    icon: 'shield-outline',
     emoji: '🛡️',
     label: 'Parental Monitoring',
     description: 'How much do your parents monitor your phone usage?',
@@ -116,7 +116,7 @@ const QuestionCard = ({ config, value, onValueChange, index, total }) => {
           </View>
           {isAnswered && (
             <View style={styles.answeredBadge}>
-              <Icon name="check" size={12} color={Colors.riskLow} />
+              <Icon name="checkmark" size={12} color={Colors.riskLow} />
               <Text variant="labelSmall" style={styles.answeredText}>Answered</Text>
             </View>
           )}
@@ -190,7 +190,7 @@ export const QuestionnaireScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerIconWrap}>
-          <Icon name="clipboard-check-outline" size={32} color={Colors.primary} />
+          <Icon name="clipboard-outline" size={32} color={Colors.primary} />
         </View>
         <Text variant="headlineSmall" style={styles.title}>
           Wellbeing Check-in
@@ -246,8 +246,9 @@ export const QuestionnaireScreen = () => {
 
       {/* Footer */}
       <View style={styles.footer}>
+        {/* Auto-save note */}
         <View style={styles.autoSaveNote}>
-          <Icon name="content-save-check-outline" size={16} color={Colors.riskLow} />
+          <Icon name="save-outline" size={16} color={Colors.riskLow} />
           <Text variant="bodySmall" style={styles.autoSaveText}>
             Responses are saved automatically
           </Text>

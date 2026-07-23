@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Card, ProgressBar, Text } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { Colors, Radius, Spacing } from '../theme';
 
 export const CompletenessCard = ({ completeness }) => {
@@ -14,7 +14,7 @@ export const CompletenessCard = ({ completeness }) => {
       <Card.Content>
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Icon name="clipboard-check-outline" size={20} color={Colors.primary} />
+            <Icon name="clipboard-outline" size={20} color={Colors.primary} />
             <Text variant="titleSmall" style={styles.title}>
               Data Completeness
             </Text>
@@ -29,7 +29,7 @@ export const CompletenessCard = ({ completeness }) => {
           style={styles.bar}
         />
         <View style={styles.hintRow}>
-          <Icon name="information-outline" size={14} color={Colors.textSecondary} />
+          <Icon name="information-circle-outline" size={14} color={Colors.textSecondary} />
           <Text variant="bodySmall" style={styles.hint}>
             {pct < 100
               ? 'Complete the questionnaire for more accurate results'

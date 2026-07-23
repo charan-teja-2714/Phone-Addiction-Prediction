@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { HomeScreen } from '../screens/HomeScreen';
 import { InsightsScreen } from '../screens/InsightsScreen';
 import { QuestionnaireScreen } from '../screens/QuestionnaireScreen';
@@ -12,28 +12,28 @@ import { Colors } from '../theme';
 const Tab = createBottomTabNavigator();
 
 /**
- * Tab icon mapping — uses only verified MaterialCommunityIcons names.
+ * Tab icon mapping — uses only verified Ionicons names.
  * Each tab has a distinct filled (focused) and outlined (unfocused) variant.
  */
 const TAB_CONFIG = {
   Home: {
-    focused: 'home-variant',
-    unfocused: 'home-variant-outline',
+    focused: 'home',
+    unfocused: 'home-outline',
     label: 'Home',
   },
   Insights: {
-    focused: 'chart-areaspline',
-    unfocused: 'chart-areaspline-variant',
+    focused: 'stats-chart',
+    unfocused: 'stats-chart-outline',
     label: 'Insights',
   },
   Questionnaire: {
-    focused: 'clipboard-check',
-    unfocused: 'clipboard-check-outline',
+    focused: 'clipboard',
+    unfocused: 'clipboard-outline',
     label: 'Check-in',
   },
   Profile: {
-    focused: 'account-circle',
-    unfocused: 'account-circle-outline',
+    focused: 'person-circle',
+    unfocused: 'person-circle-outline',
     label: 'Profile',
   },
 };

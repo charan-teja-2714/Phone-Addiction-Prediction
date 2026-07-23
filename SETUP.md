@@ -108,13 +108,16 @@ yarn install
 
 ### 3.3 Configure API URL
 
-Edit `src/config.js`:
+Edit [`MobileApp/src/config.js`](file:///i:/Final%20Year%20Projects/PhoneAddictionApp/MobileApp/src/config.js):
 ```javascript
-// For development with USB device
-export const API_BASE_URL = 'http://localhost:8000';
+// For Android Emulator (Local PC server):
+export const API_BASE_URL = 'http://10.0.2.2:8000';
 
-// For production/APK
-// export const API_BASE_URL = 'https://your-deployed-server.com';
+// For Physical Android Device via USB (with `adb reverse tcp:8000 tcp:8000`):
+// export const API_BASE_URL = 'http://localhost:8000';
+
+// For Production / Cloud Deployed Server:
+// export const API_BASE_URL = 'https://phone-addiction-prediction.onrender.com';
 ```
 
 ---

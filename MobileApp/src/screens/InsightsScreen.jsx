@@ -14,7 +14,7 @@ import {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 import { Card, Text } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { InsightCard } from '../components/InsightCard';
 import { SectionHeader } from '../components/SectionHeader';
 import { collectPerAppUsage, collectPerAppUsageForDate, collectUsageStats } from '../services/usageCollector';
@@ -31,16 +31,16 @@ const CATEGORY_LIST = [
 ];
 
 const CATEGORY_META = {
-  'Social Media':   { icon: 'forum-outline',                 color: Colors.categorySocial },
-  'Gaming':         { icon: 'gamepad-variant-outline',        color: Colors.categoryGaming },
-  'Education':      { icon: 'school-outline',                 color: Colors.categoryEducation },
-  'Entertainment':  { icon: 'play-circle-outline',            color: '#E91E63' },
-  'Communication':  { icon: 'message-text-outline',           color: '#2196F3' },
-  'Browser':        { icon: 'web',                            color: '#FF9800' },
-  'Shopping':       { icon: 'cart-outline',                   color: '#9C27B0' },
-  'Finance':        { icon: 'bank-outline',                   color: '#00897B' },
-  'Productivity':   { icon: 'briefcase-check-outline',        color: '#43A047' },
-  'Other':          { icon: 'dots-horizontal-circle-outline', color: Colors.categoryOther },
+  'Social Media': { icon: 'chatbubbles-outline', color: Colors.categorySocial },
+  'Gaming': { icon: 'game-controller-outline', color: Colors.categoryGaming },
+  'Education': { icon: 'school-outline', color: Colors.categoryEducation },
+  'Entertainment': { icon: 'play-circle-outline', color: '#E91E63' },
+  'Communication': { icon: 'mail-outline', color: '#2196F3' },
+  'Browser': { icon: 'globe-outline', color: '#FF9800' },
+  'Shopping': { icon: 'cart-outline', color: '#9C27B0' },
+  'Finance': { icon: 'card-outline', color: '#00897B' },
+  'Productivity': { icon: 'briefcase-outline', color: '#43A047' },
+  'Other': { icon: 'ellipsis-horizontal-circle-outline', color: Colors.categoryOther },
 };
 
 // ── Weekly trend chart ──
@@ -341,13 +341,13 @@ export const InsightsScreen = () => {
   const insights = [];
   if (usage.screenTimeBeforeBed > 1) {
     insights.push({
-      icon: 'moon-waning-crescent',
+      icon: 'moon-outline',
       text: `You used your phone for ${formatHours(usage.screenTimeBeforeBed)} between 10 PM and 6 AM. Late-night usage can affect sleep quality.`,
       color: Colors.riskModerate,
     });
   } else {
     insights.push({
-      icon: 'moon-waning-crescent',
+      icon: 'moon-outline',
       text: 'Your late-night phone usage is low. Keep it up for better sleep quality!',
       color: Colors.riskLow,
     });
@@ -373,7 +373,7 @@ export const InsightsScreen = () => {
   }
   if (usage.socialMediaHours > usage.educationHours && usage.socialMediaHours > 0.5) {
     insights.push({
-      icon: 'scale-unbalanced',
+      icon: 'git-compare-outline',
       text: `Social media (${formatHours(usage.socialMediaHours)}) outweighs education (${formatHours(usage.educationHours)}). Try swapping 30 min of scrolling for learning.`,
       color: Colors.info,
     });
@@ -408,7 +408,7 @@ export const InsightsScreen = () => {
       </View>
 
       {/* Weekly Risk Trend */}
-      <SectionHeader icon="chart-timeline-variant" title="Weekly Risk Trend" />
+      <SectionHeader icon="trending-up-outline" title="Weekly Risk Trend" />
       <Card style={styles.card}>
         <Card.Content>
           <WeeklyTrendChart data={weeklyDisplayData} onDayPress={handleDayPress} />
@@ -424,9 +424,9 @@ export const InsightsScreen = () => {
       </Card>
 
       {/* App Usage — Category Cards */}
-      <SectionHeader icon="shape-outline" title="Categories" />
+      <SectionHeader icon="folder-outline" title="Categories" />
       <View style={styles.sourceRow}>
-        <Icon name="information-outline" size={14} color={Colors.textSecondary} />
+        <Icon name="information-circle-outline" size={14} color={Colors.textSecondary} />
         <Text variant="labelSmall" style={styles.sourceText}>
           {totalApps} apps · Tap to expand · Tap app to reassign
         </Text>
@@ -446,7 +446,7 @@ export const InsightsScreen = () => {
         <Card style={styles.card}>
           <Card.Content>
             <View style={styles.emptyState}>
-              <Icon name="chart-bar" size={32} color={Colors.disabled} />
+              <Icon name="bar-chart-outline" size={32} color={Colors.disabled} />
               <Text variant="bodySmall" style={styles.emptyText}>
                 No app data yet. Pull down to refresh.
               </Text>
@@ -457,7 +457,7 @@ export const InsightsScreen = () => {
 
       {grouped.length > 0 && (
         <View style={styles.totalRow}>
-          <Icon name="clock-time-four-outline" size={16} color={Colors.textPrimary} />
+          <Icon name="calculator-outline" size={16} color={Colors.textPrimary} />
           <Text variant="bodyMedium" style={styles.totalLabel}>Total Screen Time</Text>
           <Text variant="titleMedium" style={styles.totalValue}>
             {formatDuration(totalMs) || formatHours(usage.dailyUsageHours)}
@@ -466,7 +466,7 @@ export const InsightsScreen = () => {
       )}
 
       {/* All Apps — Flat list */}
-      <SectionHeader icon="format-list-bulleted" title="All Apps" />
+      <SectionHeader icon="list-outline" title="All Apps" />
       <Card style={styles.card}>
         <Card.Content>
           {allAppsSorted.length > 0 ? (
@@ -532,14 +532,14 @@ export const InsightsScreen = () => {
       </Card>
 
       {/* Pattern Insights */}
-      <SectionHeader icon="lightbulb-on-outline" title="Pattern Insights" />
+      <SectionHeader icon="bulb-outline" title="Pattern Insights" />
       {insights.map((insight, i) => (
         <InsightCard key={i} icon={insight.icon} text={insight.text} color={insight.color} />
       ))}
 
       {insights.length === 0 && (
         <InsightCard
-          icon="check-circle-outline"
+          icon="checkmark-circle-outline"
           text="Not enough data yet. Use your phone normally and check back later."
           color={Colors.textSecondary}
         />
@@ -587,7 +587,7 @@ export const InsightsScreen = () => {
                     </Text>
                   </View>
                   <TouchableOpacity onPress={showExcludeInfo} hitSlop={12} style={{ marginRight: Spacing.sm }}>
-                    <Icon name="information-outline" size={20} color={Colors.textSecondary} />
+                    <Icon name="information-circle-outline" size={20} color={Colors.textSecondary} />
                   </TouchableOpacity>
                   <Switch
                     value={isExcluded}
@@ -617,7 +617,7 @@ export const InsightsScreen = () => {
                     </View>
                     <Text variant="bodyMedium" style={styles.modalCatLabel}>{cat}</Text>
                     {isCurrentCat && (
-                      <Icon name="check" size={18} color={Colors.primary} />
+                      <Icon name="checkmark" size={18} color={Colors.primary} />
                     )}
                   </TouchableOpacity>
                 );
@@ -657,7 +657,7 @@ export const InsightsScreen = () => {
               {/* Header */}
               <View style={styles.dayScreenHeader}>
                 <TouchableOpacity onPress={() => { setSelectedDay(null); setShowDayApps(false); setDayApps([]); }} style={styles.dayBackBtn} hitSlop={12}>
-                  <Icon name="arrow-left" size={24} color={Colors.textPrimary} />
+                  <Icon name="arrow-back" size={24} color={Colors.textPrimary} />
                 </TouchableOpacity>
                 <View style={styles.dayScreenTitles}>
                   <Text variant="headlineSmall" style={styles.dayScreenTitle}>{selectedDay.day}</Text>
@@ -672,7 +672,7 @@ export const InsightsScreen = () => {
               <Card style={[styles.dayRiskCard, { borderLeftColor: riskColor, borderLeftWidth: 4 }]}>
                 <Card.Content style={styles.dayRiskCardContent}>
                   <View style={[styles.dayRiskIconWrap, { backgroundColor: riskColor + '18' }]}>
-                    <Icon name="shield-account-outline" size={28} color={riskColor} />
+                    <Icon name="shield-checkmark-outline" size={28} color={riskColor} />
                   </View>
                   <View style={styles.dayRiskInfo}>
                     <Text variant="labelMedium" style={{ color: Colors.textSecondary }}>Addiction Risk</Text>
@@ -689,15 +689,15 @@ export const InsightsScreen = () => {
               </Card>
 
               {/* Stats grid — 2 columns like HomeScreen */}
-              <SectionHeader icon="chart-box-outline" title="Usage Summary" />
+              <SectionHeader icon="bar-chart-outline" title="Usage Summary" />
 
               {u ? (
                 <>
                   <View style={styles.dayStatsRow}>
                     {[
-                      { icon: 'cellphone-clock', color: Colors.primary,         value: formatHours(screenTime), label: 'Screen Time', tappable: true },
-                      phoneChecks !== null && { icon: 'lock-open-outline', color: Colors.categorySocial,   value: phoneChecks,             label: 'Phone Checks', tappable: false },
-                      appsUsed    !== null && { icon: 'apps',              color: Colors.categoryEducation, value: appsUsed,                label: 'Apps Used',    tappable: true },
+                      { icon: 'phone-portrait-outline', color: Colors.primary,         value: formatHours(screenTime), label: 'Screen Time', tappable: true },
+                      phoneChecks !== null && { icon: 'hand-left-outline', color: Colors.categorySocial,   value: phoneChecks,             label: 'Phone Checks', tappable: false },
+                      appsUsed    !== null && { icon: 'apps-outline',              color: Colors.categoryEducation, value: appsUsed,                label: 'Apps Used',    tappable: true },
                     ].filter(Boolean).map((item) => (
                       <TouchableOpacity
                         key={item.label}
@@ -716,14 +716,14 @@ export const InsightsScreen = () => {
                     ))}
                   </View>
 
-                  <SectionHeader icon="shape-outline" title="By Category" />
+                  <SectionHeader icon="folder-outline" title="By Category" />
                   <Card style={[styles.card, { marginBottom: Spacing.sm }]}>
                     <Card.Content>
                       {[
-                        { label: 'Social Media', value: socialMedia,  icon: 'account-group-outline',   color: Colors.categorySocial },
-                        { label: 'Gaming',        value: gaming,       icon: 'gamepad-variant-outline', color: Colors.categoryGaming },
+                        { label: 'Social Media', value: socialMedia,  icon: 'people-outline',   color: Colors.categorySocial },
+                        { label: 'Gaming',        value: gaming,       icon: 'game-controller-outline', color: Colors.categoryGaming },
                         { label: 'Education',     value: education,    icon: 'school-outline',           color: Colors.categoryEducation },
-                        { label: 'Late Night Use',value: nightUse,     icon: 'moon-waning-crescent',    color: Colors.riskModerate },
+                        { label: 'Late Night Use',value: nightUse,     icon: 'moon-outline',    color: Colors.riskModerate },
                       ].map((item) => (
                         <View key={item.label} style={styles.dayCatRow}>
                           <View style={[styles.dayCatIcon, { backgroundColor: item.color + '18' }]}>
@@ -741,7 +741,7 @@ export const InsightsScreen = () => {
               ) : (
                 <Card style={[styles.card, { marginTop: Spacing.md }]}>
                   <Card.Content style={styles.emptyState}>
-                    <Icon name="calendar-remove-outline" size={40} color={Colors.disabled} />
+                    <Icon name="calendar-outline" size={40} color={Colors.disabled} />
                     <Text variant="bodyMedium" style={styles.emptyText}>
                       No data available for this day.{'\n'}Open the app daily to build your history.
                     </Text>
@@ -774,7 +774,7 @@ export const InsightsScreen = () => {
                       </View>
                     ) : dayApps.length === 0 ? (
                       <View style={styles.emptyState}>
-                        <Icon name="apps" size={32} color={Colors.disabled} />
+                        <Icon name="apps-outline" size={32} color={Colors.disabled} />
                         <Text variant="bodySmall" style={styles.emptyText}>
                           No app data available for this day.
                         </Text>

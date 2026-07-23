@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { DonutChart } from './DonutChart';
 import { formatDuration, formatHours } from '../utils/formatTime';
 import { Colors, Radius, Spacing, getRiskColor } from '../theme';
@@ -75,7 +75,7 @@ export const RiskCard = ({ prediction, usage, perAppUsage = [] }) => {
   // ── Centre content ──
   const centerContent = prediction ? (
     <View style={styles.center}>
-      <Icon name="shield-check" size={20} color={getRiskColor(prediction.label)} />
+      <Icon name="shield-checkmark" size={20} color={getRiskColor(prediction.label)} />
       <Text style={[styles.centerMain, { color: getRiskColor(prediction.label) }]}>
         {prediction.label.split(' ')[0]}
       </Text>
@@ -120,13 +120,13 @@ export const RiskCard = ({ prediction, usage, perAppUsage = [] }) => {
         {prediction && (
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
-              <Icon name="target" size={14} color={Colors.textSecondary} />
+              <Icon name="locate-outline" size={14} color={Colors.textSecondary} />
               <Text variant="labelSmall" style={styles.metaText}>
                 {Math.round(prediction.confidence * 100)}% confidence
               </Text>
             </View>
             <View style={styles.metaItem}>
-              <Icon name="clock-outline" size={14} color={Colors.textSecondary} />
+              <Icon name="time-outline" size={14} color={Colors.textSecondary} />
               <Text variant="labelSmall" style={styles.metaText}>
                 {prediction.timestamp}
               </Text>

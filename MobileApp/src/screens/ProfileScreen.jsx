@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, Share, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
 import { Button, Card, Divider, Text, TextInput } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { hasUsagePermission, openUsageAccessSettings } from '../services/usageCollector';
 import {
   cancelAllNotifications,
@@ -54,7 +54,7 @@ const SwitchRow = ({ icon, label, subtitle, color, value, onToggle }) => (
 const StatusBadge = ({ granted }) => (
   <View style={[styles.statusBadge, granted ? styles.statusGranted : styles.statusDenied]}>
     <Icon
-      name={granted ? 'check-circle' : 'alert-circle'}
+      name={granted ? 'checkmark-circle' : 'alert-circle'}
       size={14}
       color={granted ? Colors.riskLow : Colors.riskHigh}
     />
@@ -278,7 +278,7 @@ export const ProfileScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerIconWrap}>
-          <Icon name="account-circle-outline" size={32} color={Colors.primary} />
+          <Icon name="person-circle-outline" size={32} color={Colors.primary} />
         </View>
         <Text variant="headlineSmall" style={styles.title}>Profile</Text>
         <Text variant="bodyMedium" style={styles.subtitle}>Settings & information</Text>
@@ -288,7 +288,7 @@ export const ProfileScreen = () => {
       <Card style={styles.appCard}>
         <Card.Content style={styles.appContent}>
           <View style={styles.appIconWrap}>
-            <Icon name="heart-pulse" size={36} color={Colors.primary} />
+            <Icon name="heart" size={36} color={Colors.primary} />
           </View>
           <Text variant="titleMedium" style={styles.appName}>Digital Wellbeing</Text>
           <Text variant="bodySmall" style={styles.appVersion}>Version 1.0.0</Text>
@@ -334,14 +334,14 @@ export const ProfileScreen = () => {
           <Text variant="labelLarge" style={styles.cardSectionTitle}>Your Profile</Text>
 
           <SettingRow
-            icon="account-outline"
+            icon="person-outline"
             label="Age & Lifestyle"
             subtitle={`Age ${userProfile.age} · Sleep ${userProfile.sleepHours}h · Exercise ${userProfile.exerciseHours}h`}
             color={Colors.primary}
             onPress={() => setShowProfileEditor(!showProfileEditor)}
             right={
               <Icon
-                name={showProfileEditor ? 'chevron-up' : 'pencil-outline'}
+                name={showProfileEditor ? 'chevron-up' : 'create-outline'}
                 size={18}
                 color={Colors.textSecondary}
               />
@@ -411,7 +411,7 @@ export const ProfileScreen = () => {
 
           <View style={styles.genderRow}>
             <View style={[styles.settingIcon, { backgroundColor: Colors.categorySocial + '12' }]}>
-              <Icon name="gender-male-female" size={20} color={Colors.categorySocial} />
+              <Icon name="male-female" size={20} color={Colors.categorySocial} />
             </View>
             <Text variant="bodyLarge" style={[styles.settingLabel, { flex: 1 }]}>Gender</Text>
             <View style={styles.genderChips}>
@@ -444,7 +444,7 @@ export const ProfileScreen = () => {
           <Text variant="labelLarge" style={styles.cardSectionTitle}>Permissions & Data</Text>
 
           <SettingRow
-            icon="cellphone-check"
+            icon="phone-portrait-outline"
             label="Usage Access"
             subtitle={permissionGranted ? 'Permission granted' : 'Tap to grant permission'}
             color={permissionGranted ? Colors.riskLow : Colors.riskHigh}
@@ -453,7 +453,7 @@ export const ProfileScreen = () => {
           />
           <Divider style={styles.divider} />
           <SwitchRow
-            icon="bell-outline"
+            icon="notifications-outline"
             label="Reminders"
             subtitle="Daily wellbeing check-in reminders"
             color={Colors.primary}
@@ -469,7 +469,7 @@ export const ProfileScreen = () => {
           <Text variant="labelLarge" style={styles.cardSectionTitle}>Goals</Text>
 
           <SettingRow
-            icon="target"
+            icon="locate-outline"
             label="Daily Screen Time Goal"
             subtitle={`Current goal: ${dailyGoalHours}h per day`}
             color={Colors.riskLow}
@@ -524,7 +524,7 @@ export const ProfileScreen = () => {
           <Text variant="labelLarge" style={styles.cardSectionTitle}>Actions</Text>
 
           <SettingRow
-            icon="restart"
+            icon="refresh"
             label="Reset Questionnaire"
             subtitle={filledCount > 0 ? `${filledCount} answers will be cleared` : 'No answers to reset'}
             color={Colors.riskModerate}
@@ -532,7 +532,7 @@ export const ProfileScreen = () => {
           />
           <Divider style={styles.divider} />
           <SettingRow
-            icon="export-variant"
+            icon="download-outline"
             label="Export My Data"
             subtitle="Share usage and questionnaire data"
             color={Colors.info}
@@ -545,7 +545,7 @@ export const ProfileScreen = () => {
       <Card style={styles.privacyCard}>
         <Card.Content>
           <View style={styles.privacyHeader}>
-            <Icon name="shield-lock-outline" size={22} color={Colors.primary} />
+            <Icon name="shield-outline" size={22} color={Colors.primary} />
             <Text variant="titleSmall" style={styles.privacyTitle}>Privacy & Data</Text>
           </View>
           <Text variant="bodySmall" style={styles.privacyText}>
@@ -561,7 +561,7 @@ export const ProfileScreen = () => {
       <Card style={[styles.privacyCard, { backgroundColor: Colors.riskModerateBg }]}>
         <Card.Content>
           <View style={styles.privacyHeader}>
-            <Icon name="information-outline" size={22} color={Colors.riskModerate} />
+            <Icon name="information-circle-outline" size={22} color={Colors.riskModerate} />
             <Text variant="titleSmall" style={styles.privacyTitle}>Disclaimer</Text>
           </View>
           <Text variant="bodySmall" style={styles.privacyText}>
@@ -576,14 +576,14 @@ export const ProfileScreen = () => {
       <Card style={styles.settingsCard}>
         <Card.Content style={styles.settingsList}>
           <SettingRow
-            icon="file-document-outline"
+            icon="document-text-outline"
             label="Terms of Service"
             color={Colors.textSecondary}
             onPress={handleTerms}
           />
           <Divider style={styles.divider} />
           <SettingRow
-            icon="lock-outline"
+            icon="lock-closed-outline"
             label="Privacy Policy"
             color={Colors.textSecondary}
             onPress={handlePrivacy}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { Colors, Radius, Spacing } from '../theme';
 
 /**
@@ -15,22 +15,22 @@ import { Colors, Radius, Spacing } from '../theme';
 // ── Tip library ──────────────────────────────────────────────────────────────
 const HIGH_TIPS = [
   {
-    icon: 'cellphone-off',
+    icon: 'phone-portrait-outline',
     title: 'Phone-Free Hours',
     body: 'Set 2 phone-free hours today — meal times are a great start. Use Do Not Disturb.',
   },
   {
-    icon: 'bell-off-outline',
+    icon: 'notifications-off-outline',
     title: 'Mute Non-Essential Notifications',
     body: 'Social media and shopping notifications drive impulsive phone checks. Silence them.',
   },
   {
-    icon: 'run',
+    icon: 'walk-outline',
     title: 'Replace Scrolling with Movement',
     body: 'Every time you feel the urge to open social media, do 10 push-ups or a 5-min walk instead.',
   },
   {
-    icon: 'moon-waning-crescent',
+    icon: 'moon-outline',
     title: 'Phone Out of Bedroom',
     body: 'Charge your phone outside the bedroom tonight. Use an alarm clock instead.',
   },
@@ -43,22 +43,22 @@ const HIGH_TIPS = [
 
 const MODERATE_TIPS = [
   {
-    icon: 'clock-check-outline',
+    icon: 'checkmark-circle-outline',
     title: 'Schedule Check-In Times',
     body: 'Instead of checking your phone constantly, pick 3 fixed times per day to catch up.',
   },
   {
-    icon: 'palette-outline',
+    icon: 'color-palette-outline',
     title: 'Grayscale Mode',
     body: 'Switch your display to grayscale. Color is a key driver of addictive app design.',
   },
   {
-    icon: 'book-open-variant',
+    icon: 'book-outline',
     title: 'Read Instead',
     body: 'Replace 30 min of social media with reading. Any book — fiction works just as well.',
   },
   {
-    icon: 'tree-outline',
+    icon: 'leaf-outline',
     title: 'Outdoor Break',
     body: 'Take a 15-min outdoor walk without your phone. Fresh air resets dopamine levels.',
   },
@@ -75,7 +75,7 @@ function getContextTips(usage, label) {
   // Add usage-specific tips
   if (usage?.screenTimeBeforeBed > 1) {
     tips.push({
-      icon: 'bed-outline',
+      icon: 'moon-outline',
       title: 'Late-Night Screen Time Detected',
       body: `You used your phone late at night. Blue light disrupts melatonin — try stopping by 10 PM.`,
     });
@@ -83,13 +83,13 @@ function getContextTips(usage, label) {
 
   if (usage?.phoneChecks > 50) {
     tips.push({
-      icon: 'cellphone-lock',
+      icon: 'lock-closed-outline',
       title: 'Too Many Phone Checks',
       body: `${usage.phoneChecks} unlocks today. Try leaving your phone face-down and only checking on vibration.`,
     });
   } else if (usage?.phoneChecks > 30) {
     tips.push({
-      icon: 'cellphone-lock',
+      icon: 'lock-closed-outline',
       title: 'Frequent Phone Checks',
       body: `${usage.phoneChecks} unlocks today. Group your tasks into batches to reduce constant switching.`,
     });
@@ -97,7 +97,7 @@ function getContextTips(usage, label) {
 
   if (usage?.socialMediaHours > 2) {
     tips.push({
-      icon: 'account-group-outline',
+      icon: 'people-outline',
       title: 'High Social Media Use',
       body: `${Math.round(usage.socialMediaHours * 60)} min on social media today. Try a 24-hour social media fast once a week.`,
     });
@@ -120,7 +120,7 @@ const RISK_CONFIG = {
   'High Addiction': {
     bg: Colors.riskHigh + '12',
     border: Colors.riskHigh,
-    icon: 'alert-circle',
+    icon: 'alert-circle-outline',
     iconColor: Colors.riskHigh,
     badge: 'HIGH RISK',
     badgeBg: Colors.riskHigh,
@@ -130,7 +130,7 @@ const RISK_CONFIG = {
   'Moderate Addiction': {
     bg: Colors.riskModerate + '12',
     border: Colors.riskModerate,
-    icon: 'alert',
+    icon: 'warning-outline',
     iconColor: Colors.riskModerate,
     badge: 'MODERATE RISK',
     badgeBg: Colors.riskModerate,
@@ -140,7 +140,7 @@ const RISK_CONFIG = {
   'Low Addiction': {
     bg: Colors.riskLow + '10',
     border: Colors.riskLow,
-    icon: 'check-circle',
+    icon: 'checkmark-circle-outline',
     iconColor: Colors.riskLow,
     badge: 'LOW RISK',
     badgeBg: Colors.riskLow,

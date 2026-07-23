@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Button, Text } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { CompletenessCard } from '../components/CompletenessCard';
 import { InsightCard } from '../components/InsightCard';
 import { RiskAlertCard } from '../components/RiskAlertCard';
@@ -23,16 +23,16 @@ import { Colors, Radius, Spacing } from '../theme';
 
 // Category metadata for the screen-time modal
 const CATEGORY_META = {
-  'Social Media': { icon: 'forum-outline', color: Colors.categorySocial },
-  'Gaming': { icon: 'gamepad-variant-outline', color: Colors.categoryGaming },
+  'Social Media': { icon: 'chatbubbles-outline', color: Colors.categorySocial },
+  'Gaming': { icon: 'game-controller-outline', color: Colors.categoryGaming },
   'Education': { icon: 'school-outline', color: Colors.categoryEducation },
   'Entertainment': { icon: 'play-circle-outline', color: '#E91E63' },
-  'Communication': { icon: 'message-text-outline', color: '#2196F3' },
-  'Browser': { icon: 'web', color: '#FF9800' },
+  'Communication': { icon: 'mail-outline', color: '#2196F3' },
+  'Browser': { icon: 'globe-outline', color: '#FF9800' },
   'Shopping': { icon: 'cart-outline', color: '#9C27B0' },
-  'Finance': { icon: 'bank-outline', color: '#00897B' },
-  'Productivity': { icon: 'briefcase-check-outline', color: '#43A047' },
-  'Other': { icon: 'dots-horizontal-circle-outline', color: Colors.categoryOther },
+  'Finance': { icon: 'card-outline', color: '#00897B' },
+  'Productivity': { icon: 'briefcase-outline', color: '#43A047' },
+  'Other': { icon: 'ellipsis-horizontal-circle-outline', color: Colors.categoryOther },
 };
 
 export const HomeScreen = () => {
@@ -105,7 +105,7 @@ export const HomeScreen = () => {
           </Text>
         </View>
         <View style={styles.headerIcon}>
-          <Icon name="cellphone-check" size={28} color={Colors.primary} />
+          <Icon name="heart" size={28} color={Colors.primary} />
         </View>
       </View>
 
@@ -135,23 +135,23 @@ export const HomeScreen = () => {
       <CompletenessCard completeness={completeness} />
 
       {/* Quick Stats */}
-      <SectionHeader icon="chart-box-outline" title="Quick Stats" />
+      <SectionHeader icon="bar-chart-outline" title="Quick Stats" />
       <View style={styles.sourceNote}>
-        <Icon name="clock-outline" size={14} color={Colors.textSecondary} />
+        <Icon name="time-outline" size={14} color={Colors.textSecondary} />
         <Text variant="labelSmall" style={styles.sourceText}>
           Today · Pull down to refresh
         </Text>
       </View>
       <View style={styles.grid}>
         <StatCard
-          icon="clock-time-four-outline"
+          icon="phone-portrait-outline"
           label="Screen Time"
           value={formatHours(usage.dailyUsageHours)}
           iconColor={Colors.primary}
           onPress={() => setShowScreenTime(true)}
         />
         <StatCard
-          icon="lock-open-outline"
+          icon="hand-left-outline"
           label="Phone Checks"
           value={`${usage.phoneChecks}`}
           iconColor={Colors.categorySocial}
@@ -159,13 +159,13 @@ export const HomeScreen = () => {
       </View>
       <View style={styles.grid}>
         <StatCard
-          icon="moon-waning-crescent"
+          icon="moon-outline"
           label="Night Usage"
           value={formatHours(usage.screenTimeBeforeBed)}
           iconColor={Colors.riskModerate}
         />
         <StatCard
-          icon="view-grid-outline"
+          icon="apps-outline"
           label="Apps Used"
           value={`${usage.appsUsed || perAppUsage.length}`}
           iconColor={Colors.categoryEducation}
@@ -173,7 +173,7 @@ export const HomeScreen = () => {
       </View>
 
       {/* Daily Insights */}
-      <SectionHeader icon="lightbulb-on-outline" title="Today's Insights" />
+      <SectionHeader icon="bulb-outline" title="Today's Insights" />
       <InsightCard
         icon="bed-outline"
         text="Getting enough sleep helps regulate screen time. Aim for 7–8 hours nightly."
@@ -181,13 +181,13 @@ export const HomeScreen = () => {
       />
 
       <InsightCard
-        icon="walk"
+        icon="walk-outline"
         text="Physical activity naturally reduces the urge to check your phone frequently."
         color={Colors.riskLow}
       />
 
       <InsightCard
-        icon="school-outline"
+        icon="book-outline"
         text="Spending time on educational content promotes healthier phone usage patterns."
         color={Colors.info}
       />
@@ -244,7 +244,7 @@ export const HomeScreen = () => {
               )}
 
               <View style={styles.modalTotal}>
-                <Icon name="clock-time-four-outline" size={18} color={Colors.textPrimary} />
+                <Icon name="calculator-outline" size={18} color={Colors.textPrimary} />
                 <Text variant="bodyMedium" style={styles.modalTotalLabel}>Total</Text>
                 <Text variant="titleMedium" style={styles.modalTotalValue}>
                   {formatHours(usage.dailyUsageHours)}

@@ -137,7 +137,10 @@ PhoneAddictionApp/
         │   ├── CompletenessCard.jsx    # Data quality indicator
         │   ├── StatCard.jsx            # Individual stat tile
         │   ├── InsightCard.jsx         # Daily tip cards
-        │   └── SectionHeader.jsx       # Reusable section title
+        │   ├── SectionHeader.jsx       # Reusable section title
+        │   ├── DonutChart.jsx          # Pure-View donut chart (72 rotated slices, no SVG)
+        │   ├── CustomSlider.jsx        # PanResponder-based slider (no external library)
+        │   └── PermissionGate.jsx      # Wrapper that shows PermissionScreen if Usage Access not granted
         │
         ├── services/
         │   ├── usageCollector.js       # JS bridge to UsageStatsModule
@@ -157,6 +160,9 @@ PhoneAddictionApp/
         │
         ├── theme/
         │   └── index.js                # Colors, spacing, radius tokens
+        │
+        ├── navigation/
+        │   └── AppNavigator.jsx        # Bottom tab navigator (Home / Insights / Check-in / Profile)
         │
         └── config.js                   # API base URL + timeout
 ```
@@ -320,6 +326,35 @@ POST /predict (raw JSON)
 #### Permission Screen
 - First-launch screen explaining why Usage Access is needed
 - Button to open Android system settings for permission grant
+
+### Navigation
+
+**File:** `navigation/AppNavigator.jsx`
+
+Bottom tab navigator built with `@react-navigation/bottom-tabs`. Four tabs with focused/unfocused MaterialCommunityIcons variants:
+
+| Tab | Screen | Icon (focused / unfocused) |
+|---|---|---|
+| Home | HomeScreen | `home-variant` / `home-variant-outline` |
+| Insights | InsightsScreen | `chart-areaspline` / `chart-areaspline-variant` |
+| Check-in | QuestionnaireScreen | `clipboard-check` / `clipboard-check-outline` |
+| Profile | ProfileScreen | `account-circle` / `account-circle-outline` |
+
+### Components
+
+New reusable components added alongside the original set:
+
+| Component | Description |
+|---|---|
+| `RiskCard.jsx` | Donut chart with risk score and confidence percentage |
+| `RiskAlertCard.jsx` | Expandable contextual tips for High/Moderate risk |
+| `CompletenessCard.jsx` | Data quality score indicator |
+| `StatCard.jsx` | Individual stat tile |
+| `InsightCard.jsx` | Daily tip cards |
+| `SectionHeader.jsx` | Reusable section title |
+| `DonutChart.jsx` | Standalone pure-View donut chart — 72 rotated rectangles (5° each), no SVG library. Props: `size`, `strokeWidth`, `segments [{value, color}]`, `centerContent` |
+| `CustomSlider.jsx` | PanResponder-based slider (no third-party slider library). Props: `value`, `min`, `max`, `step`, `onValueChange`. Used in Questionnaire and Profile screens. |
+| `PermissionGate.jsx` | App-level permission wrapper — checks Usage Access on launch, shows `PermissionScreen` if denied, auto re-checks when user returns from Settings. Supports "Skip for Now" for graceful degradation (usage stats become zeros). |
 
 ### State Management (Zustand)
 | Store Slice | Contents |
